@@ -165,3 +165,44 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
         background-color: rgba(74, 158, 255, 0.2);
     }
 }
+
+/* 15. Header 佈局優化 + 全部展開/收合按鈕樣式
+------------------------------------------------------------ */
+.completion_prompt_manager_header {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mingyu-collapse-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.mingyu-expand-all,
+.mingyu-collapse-all {
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.1s;
+    background: transparent;
+    border: none;
+}
+
+.mingyu-expand-all:hover,
+.mingyu-collapse-all:hover {
+    opacity: 1;
+}
+
+.mingyu-expand-all:active,
+.mingyu-collapse-all:active {
+    transform: scale(0.95);
+}
+
+.mingyu-expand-all svg,
+.mingyu-collapse-all svg {
+    display: block;
+    vertical-align: middle;
+}
