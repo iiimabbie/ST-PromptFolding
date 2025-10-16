@@ -190,33 +190,88 @@
     }
 
     /**
-     * 建立並掛載「啟用/停用」功能的切換按鈕
+     * 展開或收合所有群組
+     * @param {HTMLElement} listContainer 
+     * @param {boolean} shouldOpen - true 展開，false 收合
+     */
+    function toggleAllGroups(listContainer, shouldOpen) {
+        const allGroups = listContainer.querySelectorAll(`.${config.classNames.group}`);
+        
+        allGroups.forEach(details => {
+            details.open = shouldOpen;
+            const groupKey = details.dataset.groupKey;
+            if (groupKey) {
+                state.openGroups[groupKey] = shouldOpen;
+            }
+        });
+        
+        localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+    }
+
+    /**
+     * 建立並掛載「啟用/停用」功能的切換按鈕 + 全部展開/收合按鈕
      * @param {HTMLElement} listContainer
      */
     function setupToggleButton(listContainer) {
-        const header = document.querySelector(config.selectors.listHeader);
+        const header = document.querySelector('.completion_prompt_manager_header');
         if (!header) return;
 
         // 使用 data 屬性檢查，避免重複建立
         if (listContainer.dataset.mingyuButtonAdded) return;
 
+        // === 建立按鈕容器 ===
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'mingyu-collapse-controls';
+
+        // === 全部展開按鈕 (SVG) ===
+        const expandAllBtn = document.createElement('button');
+        expandAllBtn.className = 'menu_button mingyu-expand-all';
+        expandAllBtn.title = '展開所有群組';
+        expandAllBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 13l6-6h-3V3H5v4H2z"/>
+        </svg>
+    `;
+        expandAllBtn.addEventListener('click', () => toggleAllGroups(listContainer, true));
+
+        // === 全部收合按鈕 (SVG) ===
+        const collapseAllBtn = document.createElement('button');
+        collapseAllBtn.className = 'menu_button mingyu-collapse-all';
+        collapseAllBtn.title = '收合所有群組';
+        collapseAllBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 3l-6 6h3v4h6V9h3z"/>
+        </svg>
+    `;
+        collapseAllBtn.addEventListener('click', () => toggleAllGroups(listContainer, false));
+
+        // === 原有的分組開關按鈕 ===
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'menu_button';
-        toggleBtn.style.marginLeft = '10px';
-
         const updateBtnText = () => {
             toggleBtn.textContent = state.isEnabled ? '分組:開' : '分組:關';
         };
-
         toggleBtn.addEventListener('click', () => {
             state.isEnabled = !state.isEnabled;
             localStorage.setItem(config.storageKeys.featureEnabled, state.isEnabled);
             updateBtnText();
             buildCollapsibleGroups(listContainer);
         });
-
         updateBtnText();
-        header.appendChild(toggleBtn);
+
+        // === 組裝按鈕 ===
+        buttonContainer.appendChild(expandAllBtn);
+        buttonContainer.appendChild(collapseAllBtn);
+        buttonContainer.appendChild(toggleBtn);
+
+        // === 插入到 header 中，作為第二個子元素（在「提示」和「代幣總數」之間）===
+        const firstChild = header.firstElementChild;
+        if (firstChild && firstChild.nextSibling) {
+            header.insertBefore(buttonContainer, firstChild.nextSibling);
+        } else {
+            header.appendChild(buttonContainer);
+        }
+
         listContainer.dataset.mingyuButtonAdded = 'true';
     }
 
