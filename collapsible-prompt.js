@@ -194,18 +194,16 @@
 
             for (const mutation of mutations) {
                 if (mutation.type === 'childList') {
-                    // 如果有新的、未被分組的項目被加進來，就觸發重整
-                    const hasNewNodes = Array.from(mutation.addedNodes).some(node => 
-                        node.nodeType === 1 && 
-                        node.matches(config.selectors.promptListItem) && 
-                        !node.closest(`.${config.classNames.group}`)
+                    const hasChangedNodes = (nodes) => Array.from(nodes).some(node => 
+                        node.nodeType === 1 && node.matches(config.selectors.promptListItem)
                     );
-                    if (hasNewNodes) {
-                        console.log('[PF]偵測到列表項目變動，重新分組...');
+
+                    if (hasChangedNodes(mutation.addedNodes) || hasChangedNodes(mutation.removedNodes)) {
+                        console.log('[PF]偵測到列表項目變動 (拖曳或刪除)，重新分組...');
                         observer.disconnect(); // 暫停監控
                         buildCollapsibleGroups(listContainer);
                         observer.observe(listContainer, { childList: true }); // 重新開始
-                        return;
+                        return; // 找到變動就處理
                     }
                 }
             }
