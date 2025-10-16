@@ -1,7 +1,7 @@
 {
     "name": "PromptFolding",
     "display_name": "Prompt Folding",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "mingyu",
     "description": "Folds prompts under headers starting with '===' and remembers the state.",
       "css": ["collapsible-prompt.css"],
