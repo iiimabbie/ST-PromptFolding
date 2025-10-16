@@ -50,7 +50,7 @@
     };
 
     /**
-     * 根據自訂設定生成正則表達式
+     * 符號匹配
      * @returns {RegExp}
      */
     function buildDividerRegex() {
@@ -225,13 +225,12 @@
      */
     function toggleAllGroups(listContainer, shouldOpen) {
         const allGroups = listContainer.querySelectorAll(`.${config.classNames.group}`);
+        if (!allGroups.length) return;
 
         allGroups.forEach(details => {
             details.open = shouldOpen;
             const groupKey = details.dataset.groupKey;
-            if (groupKey) {
-                state.openGroups[groupKey] = shouldOpen;
-            }
+            if (groupKey) state.openGroups[groupKey] = shouldOpen;
         });
 
         localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
@@ -251,7 +250,6 @@
         // 如果設定面板已存在，不要重複建立
         let existingPanel = document.getElementById('prompt-folding-settings');
         if (existingPanel) {
-            console.log('[PF] 設定面板已存在，跳過建立');
             return;
         }
 
@@ -287,14 +285,13 @@
         // 找到 footer，插入到 footer 之前（也就是 header 之後）
         const footer = manager.querySelector('.completion_prompt_manager_footer');
         if (footer) {
-            console.log('[PF] 找到 footer，插入設定面板於 footer 之前');
             footer.insertAdjacentHTML('beforebegin', settingsHtml);
-            initializeSettingsPanel();
         } else {
-            console.warn('[PF] footer 未找到，插入到 manager 最後');
+            // 若找不到 footer，就插在容器最後
             manager.insertAdjacentHTML('beforeend', settingsHtml);
-            initializeSettingsPanel();
         }
+        // 僅初始化一次
+        initializeSettingsPanel();
     }
 
     /**
@@ -395,7 +392,6 @@
             // 拖曳開始時，立即停用 MutationObserver
             const observer = state.observers.get(listContainer);
             if (observer) {
-                console.log('[PF] 拖曳開始，暫停 Observer');
                 observer.disconnect();
             }
 
@@ -404,7 +400,6 @@
             isDraggingHeader = !!summary;
 
             if (isDraggingHeader) {
-                console.log('[PF] 開始拖曳標頭...');
                 draggedLi.classList.add('dragging');
 
                 const details = summary.closest('details');
@@ -412,7 +407,6 @@
                     details.classList.add('dragging-group');
                 }
             } else {
-                console.log('[PF] 開始拖曳普通項目...');
                 draggedLi.classList.add('dragging');
             }
         });
@@ -423,11 +417,9 @@
 
         listContainer.addEventListener('drop', (event) => {
             event.preventDefault();
-            console.log('[PF] 偵測到 drop 事件');
         });
 
         listContainer.addEventListener('dragend', (event) => {
-            console.log('[PF] 拖曳結束');
 
             // 清理視覺狀態
             const draggingItems = listContainer.querySelectorAll('.dragging');
@@ -441,7 +433,6 @@
             const wasActualDrag = dragDuration > 100;
 
             if (!wasActualDrag) {
-                console.log('[PF] 拖曳時間太短，可能是誤觸，不更新');
                 isDragging = false;
                 isDraggingHeader = false;
                 draggedElement = null;
@@ -453,12 +444,10 @@
 
             // 延遲處理，確保原生拖曳完成
             setTimeout(() => {
-                console.log('[PF] 準備重新分組...');
 
                 try {
                     // 重新分組
                     buildCollapsibleGroups(listContainer);
-                    console.log('[PF] 重新分組完成');
                 } finally {
                     // 重新啟動 observer
                     restartObserver(listContainer);
@@ -471,7 +460,6 @@
         });
 
         listContainer.addEventListener('dragcancel', () => {
-            console.log('[PF] 拖曳被取消');
 
             // 清理視覺狀態
             const draggingItems = listContainer.querySelectorAll('.dragging');
@@ -493,7 +481,6 @@
         function restartObserver(container) {
             const observer = state.observers.get(container);
             if (observer) {
-                console.log('[PF] 重新啟動 Observer');
                 observer.observe(container, { childList: true, subtree: true });
             }
         }
@@ -505,7 +492,6 @@
      */
     function initialize(listContainer) {
         if (listContainer.dataset.mingyuInitialized) return;
-        console.log('[PF]初始化提示詞分組功能...');
 
         createSettingsPanel(listContainer);
         buildCollapsibleGroups(listContainer);
@@ -539,6 +525,14 @@
         textArea.value = state.customDividers.join('\n');
         caseCheckbox.checked = state.caseSensitive;
 
+        // 小工具：關閉設定面板並同步按鈕狀態
+        const closeSettingsPanel = () => {
+            const settingsPanel = document.getElementById('prompt-folding-settings');
+            const settingsBtn = document.querySelector('.mingyu-settings-toggle');
+            if (settingsPanel) settingsPanel.style.display = 'none';
+            if (settingsBtn) settingsBtn.classList.remove('active');
+        };
+
         // 套用按鈕
         applyButton.addEventListener('click', () => {
             const newDividers = textArea.value
@@ -556,20 +550,9 @@
             saveCustomSettings();
 
             const listContainer = document.querySelector(config.selectors.promptList);
-            if (listContainer) {
-                buildCollapsibleGroups(listContainer);
-            }
+            if (listContainer) buildCollapsibleGroups(listContainer);
 
-            // 關閉設定面板並更新按鈕狀態
-            const settingsPanel = document.getElementById('prompt-folding-settings');
-            const settingsBtn = document.querySelector('.mingyu-settings-toggle');
-            if (settingsPanel) {
-                settingsPanel.style.display = 'none';
-            }
-            if (settingsBtn) {
-                settingsBtn.classList.remove('active');
-            }
-
+            closeSettingsPanel();
             toastr.success('設定已套用並重新分組');
         });
 
@@ -583,20 +566,9 @@
             caseCheckbox.checked = false;
 
             const listContainer = document.querySelector(config.selectors.promptList);
-            if (listContainer) {
-                buildCollapsibleGroups(listContainer);
-            }
+            if (listContainer) buildCollapsibleGroups(listContainer);
 
-            // 關閉設定面板並更新按鈕狀態
-            const settingsPanel = document.getElementById('prompt-folding-settings');
-            const settingsBtn = document.querySelector('.mingyu-settings-toggle');
-            if (settingsPanel) {
-                settingsPanel.style.display = 'none';
-            }
-            if (settingsBtn) {
-                settingsBtn.classList.remove('active');
-            }
-
+            closeSettingsPanel();
             toastr.info('設定已重設為預設值');
         });
     }
@@ -617,7 +589,6 @@
         const observer = new MutationObserver((mutations) => {
             // 如果正在處理中或正在拖曳，忽略所有變動
             if (state.isProcessing) {
-                console.log('[PF] 正在處理中，忽略 mutation');
                 return;
             }
 
@@ -631,7 +602,6 @@
                     );
 
                     if (hasChangedNodes(mutation.addedNodes) || hasChangedNodes(mutation.removedNodes)) {
-                        console.log('[PF] 偵測到列表項目變動 (非拖曳操作)，重新分組...');
 
                         // 暫停監控避免循環觸發
                         observer.disconnect();
@@ -681,7 +651,6 @@
         });
 
         observer.observe(appBody, { childList: true, subtree: true });
-        console.log('[PF]提示詞分組監控已啟動。');
     }
 
     // --- 程式進入點 ---
