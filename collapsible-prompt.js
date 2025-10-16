@@ -36,7 +36,7 @@
             isGroupHeader: 'is-group-header', // 加到作為標題的 li 元素上
         },
         // 預設的分組標示
-        defaultDividers: ['=+', '-+']
+        defaultDividers: ['=', '-']
     };
 
     // --- 狀態管理 ---
@@ -55,14 +55,8 @@
      */
     function buildDividerRegex() {
         const patterns = state.customDividers.map(pattern => {
-            // 如果是 /pattern/ 格式，提取正則表達式
-            const regexMatch = pattern.match(/^\/(.+)\/([gimuy]*)$/);
-            if (regexMatch) {
-                return regexMatch[1];
-            }
-            // 否則當作普通字串處理，需要轉義特殊字元
-            const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            return escaped;
+            // 完全轉義所有特殊字元，當作普通字串處理
+            return pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         });
         const flags = state.caseSensitive ? '' : 'i';
         return new RegExp(`^(${patterns.join('|')})`, flags);
@@ -249,7 +243,10 @@
      */
     function createSettingsPanel(listContainer) {
         const manager = document.getElementById('completion_prompt_manager');
-        if (!manager) return;
+        if (!manager) {
+            console.warn('[PF] completion_prompt_manager 未找到');
+            return;
+        }
 
         // 如果設定面板已存在，不要重複建立
         let existingPanel = document.getElementById('prompt-folding-settings');
@@ -263,12 +260,12 @@
             <div class="inline-drawer-content" style="display: block;">
                 <div style="position: relative;">
                     <h3>分組標示設定</h3>
-                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字模式。&#10;&#10;範例：&#10;• 輸入「=+」會匹配「=+」或「===」開頭的提示詞&#10;• 輸入「-+」會匹配「-+」或「---」開頭的提示詞&#10;• 輸入「=」會匹配單個「=」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。">?</span>
+                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「===」會匹配「===」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。&#10;被當作標頭的符號不會出現在標題上。">?</span>
                 </div>
                 <label for="prompt-folding-dividers">
                     <span>分組標示符號（一行一個）</span>
                 </label>
-                <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=+&#10;-+"></textarea>
+                <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=&#10;-"></textarea>
                 
                 <label class="checkbox_label marginTop10" for="prompt-folding-case-sensitive">
                     <input id="prompt-folding-case-sensitive" type="checkbox" />
@@ -287,10 +284,15 @@
         </div>
     `;
 
-        // 插入到提示詞管理器的最上方（header 之後）
-        const header = manager.querySelector('.completion_prompt_manager_header');
-        if (header) {
-            header.insertAdjacentHTML('afterend', settingsHtml);
+        // 找到 footer，插入到 footer 之前（也就是 header 之後）
+        const footer = manager.querySelector('.completion_prompt_manager_footer');
+        if (footer) {
+            console.log('[PF] 找到 footer，插入設定面板於 footer 之前');
+            footer.insertAdjacentHTML('beforebegin', settingsHtml);
+            initializeSettingsPanel();
+        } else {
+            console.warn('[PF] footer 未找到，插入到 manager 最後');
+            manager.insertAdjacentHTML('beforeend', settingsHtml);
             initializeSettingsPanel();
         }
     }
