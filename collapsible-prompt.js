@@ -222,91 +222,126 @@
 
     /**
      * 設置拖曳事件處理
-     * @param {HTMLElement} listContainer
+     * @param {HTMLElement} listContainer 
      */
     function setupDragHandlers(listContainer) {
-        let draggedHeaderInfo = null;
         let isDraggingHeader = false;
+        let draggedElement = null;
+        let dragStartTime = 0;
+        let isDragging = false; // 全域拖曳狀態標記
 
         listContainer.addEventListener('dragstart', (event) => {
             const draggedLi = event.target.closest(config.selectors.promptListItem);
             if (!draggedLi) return;
 
-            // 加入拖曳 class
-            draggedLi.classList.add('dragging');
-
+            isDragging = true; // 標記正在拖曳
+            draggedElement = draggedLi;
+            dragStartTime = Date.now();
+            
+            // 拖曳開始時，立即停用 MutationObserver
+            const observer = state.observers.get(listContainer);
+            if (observer) {
+                console.log('[PF] 拖曳開始，暫停 Observer');
+                observer.disconnect();
+            }
+            
+            // 檢查是否在拖曳標題
             const summary = draggedLi.closest('summary');
-            if (summary) {
+            isDraggingHeader = !!summary;
+            
+            if (isDraggingHeader) {
                 console.log('[PF] 開始拖曳標頭...');
-                isDraggingHeader = true;
+                draggedLi.classList.add('dragging');
+                
                 const details = summary.closest('details');
                 if (details) {
-                    // 儲存拖曳資訊
-                    draggedHeaderInfo = {
-                        details,
-                        li: draggedLi,
-                        groupKey: details.dataset.groupKey,
-                        wasOpen: details.open
-                    };
-                    // 將 li 暫時移到 details 前面，成為 ul 的直接子項
-                    details.parentElement.insertBefore(draggedLi, details);
-                    // 隱藏舊的 details 容器
-                    details.style.display = 'none';
+                    details.classList.add('dragging-group');
                 }
             } else {
-                isDraggingHeader = false;
+                console.log('[PF] 開始拖曳普通項目...');
+                draggedLi.classList.add('dragging');
             }
         });
 
-        // 處理拖曳取消的情況
-        listContainer.addEventListener('dragcancel', () => {
-            // 移除拖曳 class
-            const draggingItem = listContainer.querySelector('.dragging');
-            if (draggingItem) draggingItem.classList.remove('dragging');
+        listContainer.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
 
-            if (draggedHeaderInfo) {
-                console.log('[PF] 拖曳被取消，恢復原狀...');
-                restoreDraggedHeader();
-            }
+        listContainer.addEventListener('drop', (event) => {
+            event.preventDefault();
+            console.log('[PF] 偵測到 drop 事件');
         });
 
         listContainer.addEventListener('dragend', (event) => {
-            // 移除拖曳 class
-            const draggedLi = event.target.closest(config.selectors.promptListItem);
-            if (draggedLi) draggedLi.classList.remove('dragging');
-
-            if (draggedHeaderInfo) {
-                console.log('[PF] 標頭拖曳結束，清理並重整');
-                // 移除我們隱藏的舊 details 元素
-                draggedHeaderInfo.details.remove();
-                draggedHeaderInfo = null;
+            console.log('[PF] 拖曳結束');
+            
+            // 清理視覺狀態
+            const draggingItems = listContainer.querySelectorAll('.dragging');
+            draggingItems.forEach(item => item.classList.remove('dragging'));
+            
+            const draggingGroups = listContainer.querySelectorAll('.dragging-group');
+            draggingGroups.forEach(group => group.classList.remove('dragging-group'));
+            
+            // 計算拖曳時間
+            const dragDuration = Date.now() - dragStartTime;
+            const wasActualDrag = dragDuration > 100;
+            
+            if (!wasActualDrag) {
+                console.log('[PF] 拖曳時間太短，可能是誤觸，不更新');
+                isDragging = false;
+                isDraggingHeader = false;
+                draggedElement = null;
+                
+                // 重新啟動 observer
+                restartObserver(listContainer);
+                return;
             }
-
-            // 只在拖曳標題時才重新分組
-            if (isDraggingHeader) {
-                console.log('[PF] 標頭拖曳結束，強制重新分組...');
-                setTimeout(() => buildCollapsibleGroups(listContainer), 50);
-            } else {
-                console.log('[PF] 普通項目拖曳結束，不需重新分組');
-            }
-
-            isDraggingHeader = false;
+            
+            // 延遲處理，確保原生拖曳完成
+            setTimeout(() => {
+                console.log('[PF] 準備重新分組...');
+                
+                try {
+                    // 重新分組
+                    buildCollapsibleGroups(listContainer);
+                    console.log('[PF] 重新分組完成');
+                } finally {
+                    // 重新啟動 observer
+                    restartObserver(listContainer);
+                }
+                
+                isDragging = false;
+                isDraggingHeader = false;
+                draggedElement = null;
+            }, 150);
         });
 
-        function restoreDraggedHeader() {
-            if (!draggedHeaderInfo) return;
-
-            const { details, li, wasOpen } = draggedHeaderInfo;
-            details.style.display = '';
-            details.open = wasOpen;
-
-            const summary = details.querySelector('summary');
-            if (summary && li.parentElement !== summary) {
-                summary.appendChild(li);
-            }
-
-            draggedHeaderInfo = null;
+        listContainer.addEventListener('dragcancel', () => {
+            console.log('[PF] 拖曳被取消');
+            
+            // 清理視覺狀態
+            const draggingItems = listContainer.querySelectorAll('.dragging');
+            draggingItems.forEach(item => item.classList.remove('dragging'));
+            
+            const draggingGroups = listContainer.querySelectorAll('.dragging-group');
+            draggingGroups.forEach(group => group.classList.remove('dragging-group'));
+            
+            isDragging = false;
             isDraggingHeader = false;
+            draggedElement = null;
+            dragStartTime = 0;
+            
+            // 重新啟動 observer
+            restartObserver(listContainer);
+        });
+
+        // 輔助函式：重新啟動 observer
+        function restartObserver(container) {
+            const observer = state.observers.get(container);
+            if (observer) {
+                console.log('[PF] 重新啟動 Observer');
+                observer.observe(container, { childList: true, subtree: true });
+            }
         }
     }
 
@@ -340,29 +375,43 @@
         }
 
         const observer = new MutationObserver((mutations) => {
-            if (state.isProcessing) return;
+            // 如果正在處理中或正在拖曳，忽略所有變動
+            if (state.isProcessing) {
+                console.log('[PF] 正在處理中，忽略 mutation');
+                return;
+            }
 
             for (const mutation of mutations) {
                 if (mutation.type === 'childList') {
                     const hasChangedNodes = (nodes) => Array.from(nodes).some(node =>
-                        node.nodeType === 1 && node.matches(config.selectors.promptListItem)
+                        node.nodeType === 1 && (
+                            node.matches(config.selectors.promptListItem) ||
+                            node.querySelector(config.selectors.promptListItem)
+                        )
                     );
 
                     if (hasChangedNodes(mutation.addedNodes) || hasChangedNodes(mutation.removedNodes)) {
-                        console.log('[PF]偵測到列表項目變動 (拖曳或刪除)，重新分組...');
-                        observer.disconnect(); // 暫停監控
+                        console.log('[PF] 偵測到列表項目變動 (非拖曳操作)，重新分組...');
+                        
+                        // 暫停監控避免循環觸發
+                        observer.disconnect();
+                        
                         try {
                             buildCollapsibleGroups(listContainer);
                         } finally {
-                            observer.observe(listContainer, { childList: true, subtree: false }); // 重新開始
+                            // 延遲重新啟動，確保所有 DOM 操作完成
+                            setTimeout(() => {
+                                observer.observe(listContainer, { childList: true, subtree: true });
+                            }, 100);
                         }
-                        return; // 找到變動就處理
+                        return;
                     }
                 }
             }
         });
 
-        observer.observe(listContainer, { childList: true, subtree: false });
+        // 監控整個子樹，但只在非拖曳狀態下處理
+        observer.observe(listContainer, { childList: true, subtree: true });
         state.observers.set(listContainer, observer);
     }
 

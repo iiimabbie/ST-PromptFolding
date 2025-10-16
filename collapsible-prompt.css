@@ -70,24 +70,36 @@
     margin-top: 5px; /* 內容和標題之間加點間距 */
 }
 
-/* 7. 拖曳狀態的視覺回饋 (新增)
+/* 7. 拖曳狀態的視覺回饋 (改進)
 ------------------------------------------------------------ */
-.mingyu-prompt-group > summary > li.completion_prompt_manager_prompt[draggable="true"] {
+li.completion_prompt_manager_prompt[draggable="true"] {
     cursor: move;
 }
 
-/* 拖曳時的半透明效果 */
-.mingyu-prompt-group > summary > li.completion_prompt_manager_prompt.dragging {
-    opacity: 0.5;
+/* 拖曳中的項目半透明 */
+li.completion_prompt_manager_prompt.dragging {
+    opacity: 0.4;
+    background-color: rgba(74, 158, 255, 0.1);
 }
 
-/* 8. 隱藏被拖曳的 details 容器 (新增)
+/* 拖曳中的整個群組有邊框提示 */
+.mingyu-prompt-group.dragging-group {
+    outline: 2px dashed #4a9eff;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* 8. 拖曳目標區域的視覺回饋 (新增)
 ------------------------------------------------------------ */
-.mingyu-prompt-group[style*="display: none"] {
-    display: none !important;
+li.completion_prompt_manager_prompt[draggable="true"]:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 9. 空群組的提示 (可選，新增)
+/* 9. 移除舊的隱藏樣式 (已不需要)
+------------------------------------------------------------ */
+/* .mingyu-prompt-group[style*="display: none"] - 已移除 */
+
+/* 10. 空群組的提示 (保持)
 ------------------------------------------------------------ */
 .mingyu-prompt-group-content:empty::after {
     content: '(空群組)';
@@ -98,7 +110,7 @@
     display: block;
 }
 
-/* 10. Hover 效果改進 (新增)
+/* 11. Hover 效果改進 (保持)
 ------------------------------------------------------------ */
 .mingyu-prompt-group > summary:hover {
     background-color: rgba(255, 255, 255, 0.05);
@@ -109,7 +121,7 @@
     color: #fff; /* 懸停時箭頭變亮 */
 }
 
-/* 11. 焦點狀態 (新增，改善鍵盤導航)
+/* 12. 焦點狀態 (保持)
 ------------------------------------------------------------ */
 .mingyu-prompt-group > summary:focus {
     outline: 2px solid #4a9eff;
@@ -117,7 +129,7 @@
     border-radius: 4px;
 }
 
-/* 12. 過渡動畫改進 (新增)
+/* 13. 過渡動畫改進 (保持)
 ------------------------------------------------------------ */
 .mingyu-prompt-group-content {
     animation: slideDown 0.2s ease-out;
@@ -134,7 +146,7 @@
     }
 }
 
-/* 13. 深色主題適配 (可選，新增)
+/* 14. 深色主題適配 (保持)
 ------------------------------------------------------------ */
 @media (prefers-color-scheme: light) {
     .mingyu-prompt-group > summary::before {
@@ -147,5 +159,9 @@
     
     .mingyu-prompt-group > summary:hover {
         background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    li.completion_prompt_manager_prompt.dragging {
+        background-color: rgba(74, 158, 255, 0.2);
     }
 }
