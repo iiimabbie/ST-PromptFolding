@@ -22,19 +22,21 @@
             promptAsterisk: '.fa-asterisk', // 標題列要隱藏的星號
             listHeader: '.completion_prompt_manager_list_head',
         },
-        // 用來識別標題的正規表示式
-        dividerRegex: new RegExp(`^(=+|⭐─\+|━\+)`),
         // localStorage 的鍵值
         storageKeys: {
             openStates: 'mingyu_collapsible_openStates',
             featureEnabled: 'mingyu_collapsible_isEnabled',
+            customDividers: 'mingyu_collapsible_customDividers',
+            caseSensitive: 'mingyu_collapsible_caseSensitive',
         },
         // CSS class 名稱
         classNames: {
             group: 'mingyu-prompt-group',
             groupContent: 'mingyu-prompt-group-content',
             isGroupHeader: 'is-group-header', // 加到作為標題的 li 元素上
-        }
+        },
+        // 預設的分組標示
+        defaultDividers: ['=+', '⭐─\\+', '━\\+']
     };
 
     // --- 狀態管理 ---
@@ -43,7 +45,39 @@
         isEnabled: localStorage.getItem(config.storageKeys.featureEnabled) !== 'false',
         isProcessing: false, // 防止重複執行的標記
         observers: new WeakMap(), // 儲存每個 listContainer 的 observer
+        customDividers: JSON.parse(localStorage.getItem(config.storageKeys.customDividers) || 'null') || config.defaultDividers,
+        caseSensitive: localStorage.getItem(config.storageKeys.caseSensitive) === 'true',
     };
+
+    /**
+     * 根據自訂設定生成正則表達式
+     * @returns {RegExp}
+     */
+    function buildDividerRegex() {
+        const patterns = state.customDividers.map(pattern => {
+            // 如果是 /pattern/ 格式，提取正則表達式
+            const regexMatch = pattern.match(/^\/(.+)\/([gimuy]*)$/);
+            if (regexMatch) {
+                return regexMatch[1];
+            }
+            // 否則當作普通字串處理（已經轉義）
+            return pattern;
+        });
+        const flags = state.caseSensitive ? '' : 'i';
+        return new RegExp(`^(${patterns.join('|')})`, flags);
+    }
+
+    // 動態生成 dividerRegex
+    let dividerRegex = buildDividerRegex();
+
+    /**
+     * 儲存自訂設定
+     */
+    function saveCustomSettings() {
+        localStorage.setItem(config.storageKeys.customDividers, JSON.stringify(state.customDividers));
+        localStorage.setItem(config.storageKeys.caseSensitive, state.caseSensitive);
+        dividerRegex = buildDividerRegex();
+    }
 
     // --- 主要功能函式 ---
 
@@ -63,7 +97,7 @@
             promptItem.dataset.originalName = originalName;
         }
 
-        const match = config.dividerRegex.exec(originalName);
+        const match = dividerRegex.exec(originalName);
         if (match) {
             const cleanName = originalName.substring(match[0].length).trim();
             // 使用更穩定的 key：結合索引位置
@@ -191,12 +225,12 @@
 
     /**
      * 展開或收合所有群組
-     * @param {HTMLElement} listContainer 
+     * @param {HTMLElement} listContainer
      * @param {boolean} shouldOpen - true 展開，false 收合
      */
     function toggleAllGroups(listContainer, shouldOpen) {
         const allGroups = listContainer.querySelectorAll(`.${config.classNames.group}`);
-        
+
         allGroups.forEach(details => {
             details.open = shouldOpen;
             const groupKey = details.dataset.groupKey;
@@ -204,12 +238,59 @@
                 state.openGroups[groupKey] = shouldOpen;
             }
         });
-        
+
         localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
     }
 
     /**
-     * 建立並掛載「啟用/停用」功能的切換按鈕 + 全部展開/收合按鈕
+     * 建立設定面板並插入到提示詞管理器中
+     * @param {HTMLElement} listContainer
+     */
+    function createSettingsPanel(listContainer) {
+        const manager = document.getElementById('completion_prompt_manager');
+        if (!manager || manager.dataset.mingyuSettingsPanelAdded) return;
+
+        const settingsHtml = `
+        <div id="prompt-folding-settings" class="range-block marginBot10" style="display: none;">
+            <div class="inline-drawer-content" style="display: block;">
+                <h3>分組標示設定</h3>
+                <label for="prompt-folding-dividers">
+                    <span>分組標示符號（一行一個）</span>
+                </label>
+                <small class="notes">
+                    輸入用於標識群組標題的符號或文字模式。<br>
+                    <strong>預設：</strong><code>=</code>, <code>⭐─+</code>, <code>━+</code>
+                </small>
+                <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=&#10;⭐─+&#10;━+"></textarea>
+                
+                <label class="checkbox_label marginTop10" for="prompt-folding-case-sensitive">
+                    <input id="prompt-folding-case-sensitive" type="checkbox" />
+                    <span>區分大小寫</span>
+                </label>
+
+                <div class="flex-container justifyCenter marginTop10">
+                    <div id="prompt-folding-apply" class="menu_button menu_button_icon">
+                        <i class="fa-solid fa-check"></i> 套用
+                    </div>
+                    <div id="prompt-folding-reset" class="menu_button menu_button_icon">
+                        <i class="fa-solid fa-rotate-left"></i> 重設
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // 插入到提示詞管理器的最上方（header 之後）
+        const header = manager.querySelector('.completion_prompt_manager_header');
+        if (header) {
+            header.insertAdjacentHTML('afterend', settingsHtml);
+            manager.dataset.mingyuSettingsPanelAdded = 'true';
+            initializeSettingsPanel();
+        }
+    }
+
+    /**
+     * 建立並掛載「啟用/停用」功能的切換按鈕 + 全部展開/收合按鈕 + 設定按鈕
      * @param {HTMLElement} listContainer
      */
     function setupToggleButton(listContainer) {
@@ -223,27 +304,33 @@
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'mingyu-collapse-controls';
 
-        // === 全部展開按鈕 (SVG) ===
+        // === 全部展開按鈕 (Emoji) ===
         const expandAllBtn = document.createElement('button');
         expandAllBtn.className = 'menu_button mingyu-expand-all';
         expandAllBtn.title = '展開所有群組';
-        expandAllBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 13l6-6h-3V3H5v4H2z"/>
-        </svg>
-    `;
+        expandAllBtn.textContent = '⬇️';
         expandAllBtn.addEventListener('click', () => toggleAllGroups(listContainer, true));
 
-        // === 全部收合按鈕 (SVG) ===
+        // === 全部收合按鈕 (Emoji) ===
         const collapseAllBtn = document.createElement('button');
         collapseAllBtn.className = 'menu_button mingyu-collapse-all';
         collapseAllBtn.title = '收合所有群組';
-        collapseAllBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 3l-6 6h3v4h6V9h3z"/>
-        </svg>
-    `;
+        collapseAllBtn.textContent = '⬆️';
         collapseAllBtn.addEventListener('click', () => toggleAllGroups(listContainer, false));
+
+        // === 設定按鈕 (Emoji 齒輪) ===
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'menu_button mingyu-settings-toggle';
+        settingsBtn.title = '分組設定';
+        settingsBtn.textContent = '⚙️';
+        settingsBtn.addEventListener('click', () => {
+            const settingsPanel = document.getElementById('prompt-folding-settings');
+            if (settingsPanel) {
+                const isVisible = settingsPanel.style.display !== 'none';
+                settingsPanel.style.display = isVisible ? 'none' : 'block';
+                settingsBtn.classList.toggle('active', !isVisible);
+            }
+        });
 
         // === 原有的分組開關按鈕 ===
         const toggleBtn = document.createElement('button');
@@ -259,9 +346,10 @@
         });
         updateBtnText();
 
-        // === 組裝按鈕 ===
+        // === 組裝按鈕（順序：展開、收合、設定、分組開關）===
         buttonContainer.appendChild(expandAllBtn);
         buttonContainer.appendChild(collapseAllBtn);
+        buttonContainer.appendChild(settingsBtn);
         buttonContainer.appendChild(toggleBtn);
 
         // === 插入到 header 中，作為第二個子元素（在「提示」和「代幣總數」之間）===
@@ -277,7 +365,7 @@
 
     /**
      * 設置拖曳事件處理
-     * @param {HTMLElement} listContainer 
+     * @param {HTMLElement} listContainer
      */
     function setupDragHandlers(listContainer) {
         let isDraggingHeader = false;
@@ -292,22 +380,22 @@
             isDragging = true; // 標記正在拖曳
             draggedElement = draggedLi;
             dragStartTime = Date.now();
-            
+
             // 拖曳開始時，立即停用 MutationObserver
             const observer = state.observers.get(listContainer);
             if (observer) {
                 console.log('[PF] 拖曳開始，暫停 Observer');
                 observer.disconnect();
             }
-            
+
             // 檢查是否在拖曳標題
             const summary = draggedLi.closest('summary');
             isDraggingHeader = !!summary;
-            
+
             if (isDraggingHeader) {
                 console.log('[PF] 開始拖曳標頭...');
                 draggedLi.classList.add('dragging');
-                
+
                 const details = summary.closest('details');
                 if (details) {
                     details.classList.add('dragging-group');
@@ -329,33 +417,33 @@
 
         listContainer.addEventListener('dragend', (event) => {
             console.log('[PF] 拖曳結束');
-            
+
             // 清理視覺狀態
             const draggingItems = listContainer.querySelectorAll('.dragging');
             draggingItems.forEach(item => item.classList.remove('dragging'));
-            
+
             const draggingGroups = listContainer.querySelectorAll('.dragging-group');
             draggingGroups.forEach(group => group.classList.remove('dragging-group'));
-            
+
             // 計算拖曳時間
             const dragDuration = Date.now() - dragStartTime;
             const wasActualDrag = dragDuration > 100;
-            
+
             if (!wasActualDrag) {
                 console.log('[PF] 拖曳時間太短，可能是誤觸，不更新');
                 isDragging = false;
                 isDraggingHeader = false;
                 draggedElement = null;
-                
+
                 // 重新啟動 observer
                 restartObserver(listContainer);
                 return;
             }
-            
+
             // 延遲處理，確保原生拖曳完成
             setTimeout(() => {
                 console.log('[PF] 準備重新分組...');
-                
+
                 try {
                     // 重新分組
                     buildCollapsibleGroups(listContainer);
@@ -364,7 +452,7 @@
                     // 重新啟動 observer
                     restartObserver(listContainer);
                 }
-                
+
                 isDragging = false;
                 isDraggingHeader = false;
                 draggedElement = null;
@@ -373,19 +461,19 @@
 
         listContainer.addEventListener('dragcancel', () => {
             console.log('[PF] 拖曳被取消');
-            
+
             // 清理視覺狀態
             const draggingItems = listContainer.querySelectorAll('.dragging');
             draggingItems.forEach(item => item.classList.remove('dragging'));
-            
+
             const draggingGroups = listContainer.querySelectorAll('.dragging-group');
             draggingGroups.forEach(group => group.classList.remove('dragging-group'));
-            
+
             isDragging = false;
             isDraggingHeader = false;
             draggedElement = null;
             dragStartTime = 0;
-            
+
             // 重新啟動 observer
             restartObserver(listContainer);
         });
@@ -408,12 +496,78 @@
         if (listContainer.dataset.mingyuInitialized) return;
         console.log('[PF]初始化提示詞分組功能...');
 
+        createSettingsPanel(listContainer);
         buildCollapsibleGroups(listContainer);
         setupToggleButton(listContainer);
         createListContentObserver(listContainer);
         setupDragHandlers(listContainer);
 
         listContainer.dataset.mingyuInitialized = 'true';
+    }
+
+    /**
+     * 初始化設定面板的事件監聽
+     */
+    function initializeSettingsPanel() {
+        const textArea = document.getElementById('prompt-folding-dividers');
+        const caseCheckbox = document.getElementById('prompt-folding-case-sensitive');
+        const applyButton = document.getElementById('prompt-folding-apply');
+        const resetButton = document.getElementById('prompt-folding-reset');
+
+        if (!textArea || !caseCheckbox || !applyButton || !resetButton) {
+            console.warn('[PF] 設定面板元素未找到');
+            return;
+        }
+
+        // 確保 customDividers 存在
+        if (!Array.isArray(state.customDividers)) {
+            state.customDividers = [...config.defaultDividers];
+        }
+
+        // 載入當前設定
+        textArea.value = state.customDividers.join('\n');
+        caseCheckbox.checked = state.caseSensitive;
+
+        // 套用按鈕
+        applyButton.addEventListener('click', () => {
+            const newDividers = textArea.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (newDividers.length === 0) {
+                toastr.warning('請至少輸入一個分組標示符號');
+                return;
+            }
+
+            state.customDividers = newDividers;
+            state.caseSensitive = caseCheckbox.checked;
+            saveCustomSettings();
+
+            const listContainer = document.querySelector(config.selectors.promptList);
+            if (listContainer) {
+                buildCollapsibleGroups(listContainer);
+            }
+
+            toastr.success('設定已套用並重新分組');
+        });
+
+        // 重設按鈕
+        resetButton.addEventListener('click', () => {
+            state.customDividers = [...config.defaultDividers];
+            state.caseSensitive = false;
+            saveCustomSettings();
+
+            textArea.value = state.customDividers.join('\n');
+            caseCheckbox.checked = false;
+
+            const listContainer = document.querySelector(config.selectors.promptList);
+            if (listContainer) {
+                buildCollapsibleGroups(listContainer);
+            }
+
+            toastr.info('設定已重設為預設值');
+        });
     }
 
     // --- 監控器 (Mutation Observers) ---
@@ -447,10 +601,10 @@
 
                     if (hasChangedNodes(mutation.addedNodes) || hasChangedNodes(mutation.removedNodes)) {
                         console.log('[PF] 偵測到列表項目變動 (非拖曳操作)，重新分組...');
-                        
+
                         // 暫停監控避免循環觸發
                         observer.disconnect();
-                        
+
                         try {
                             buildCollapsibleGroups(listContainer);
                         } finally {

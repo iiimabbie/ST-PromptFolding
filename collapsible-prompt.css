@@ -179,8 +179,10 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     display: flex;
     gap: 6px;
     align-items: center;
+    margin-left: auto; /* 推到最右邊 */
 }
 
+.mingyu-settings-toggle,
 .mingyu-expand-all,
 .mingyu-collapse-all {
     padding: 4px 8px;
@@ -189,20 +191,50 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     transition: opacity 0.2s, transform 0.1s;
     background: transparent;
     border: none;
+    font-size: 16px;
+    line-height: 1;
 }
 
+.mingyu-settings-toggle:hover,
 .mingyu-expand-all:hover,
 .mingyu-collapse-all:hover {
     opacity: 1;
 }
 
+.mingyu-settings-toggle.active {
+    opacity: 1;
+    background-color: rgba(74, 158, 255, 0.2);
+    border-radius: 4px;
+}
+
+.mingyu-settings-toggle:active,
 .mingyu-expand-all:active,
 .mingyu-collapse-all:active {
     transform: scale(0.95);
 }
 
-.mingyu-expand-all svg,
-.mingyu-collapse-all svg {
+/* 16. 設定面板樣式
+------------------------------------------------------------ */
+#prompt-folding-settings {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#prompt-folding-settings h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+#prompt-folding-settings .notes {
     display: block;
-    vertical-align: middle;
+    margin-bottom: 8px;
+    color: #aaa;
+}
+
+#prompt-folding-dividers {
+    width: 100%;
+    font-family: 'Courier New', monospace;
 }

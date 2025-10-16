@@ -1,9 +1,12 @@
 {
-    "name": "PromptFolding",
-    "display_name": "Prompt Folding",
-    "version": "1.1.0",
-    "author": "mingyu",
-    "description": "Folds prompts under headers starting with '===' and remembers the state.",
-      "css": ["collapsible-prompt.css"],
-      "js": ["collapsible-prompt.js"]
+  "display_name": "Prompt Folding",
+  "loading_order": 1,
+  "requires": [],
+  "optional": [],
+  "js": "collapsible-prompt.js",
+  "css": "collapsible-prompt.css",
+  "author": "mingyu",
+  "version": "1.1.0",
+  "homePage": "https://github.com/iiimabbie/ST-PromptFolding",
+  "settings_ui": "settings.html"
 }
