@@ -238,3 +238,28 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     width: 100%;
     font-family: 'Courier New', monospace;
 }
+
+/* 說明圖示樣式 */
+.mingyu-help-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--SmartThemeBlurTintColor, rgba(255, 255, 255, 0.1));
+    color: var(--SmartThemeBodyColor, #fff);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: help;
+    transition: all 0.2s ease;
+    border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.2));
+}
+
+.mingyu-help-icon:hover {
+    background-color: var(--SmartThemeQuotColor, rgba(255, 255, 255, 0.2));
+    transform: scale(1.1);
+}
