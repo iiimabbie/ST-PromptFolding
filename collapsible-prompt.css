@@ -95,10 +95,6 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 9. 移除舊的隱藏樣式 (已不需要)
------------------------------------------------------------- */
-/* .mingyu-prompt-group[style*="display: none"] - 已移除 */
-
 /* 10. 空群組的提示 (保持)
 ------------------------------------------------------------ */
 .mingyu-prompt-group-content:empty::after {

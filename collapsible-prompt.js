@@ -354,11 +354,11 @@
         });
         updateBtnText();
 
-        // === 組裝按鈕（順序：展開、收合、設定、分組開關）===
+        // === 組裝按鈕（順序：展開、收合、分組開關、設定）===
         buttonContainer.appendChild(expandAllBtn);
         buttonContainer.appendChild(collapseAllBtn);
-        buttonContainer.appendChild(settingsBtn);
         buttonContainer.appendChild(toggleBtn);
+        buttonContainer.appendChild(settingsBtn);
 
         // === 插入到 header 中，作為第二個子元素（在「提示」和「代幣總數」之間）===
         const firstChild = header.firstElementChild;
