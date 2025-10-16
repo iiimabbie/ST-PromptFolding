@@ -36,7 +36,7 @@
             isGroupHeader: 'is-group-header', // 加到作為標題的 li 元素上
         },
         // 預設的分組標示
-        defaultDividers: ['=+', '⭐─\\+', '━\\+']
+        defaultDividers: ['=+', '-+']
     };
 
     // --- 狀態管理 ---
@@ -60,8 +60,9 @@
             if (regexMatch) {
                 return regexMatch[1];
             }
-            // 否則當作普通字串處理（已經轉義）
-            return pattern;
+            // 否則當作普通字串處理，需要轉義特殊字元
+            const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return escaped;
         });
         const flags = state.caseSensitive ? '' : 'i';
         return new RegExp(`^(${patterns.join('|')})`, flags);
@@ -248,20 +249,26 @@
      */
     function createSettingsPanel(listContainer) {
         const manager = document.getElementById('completion_prompt_manager');
-        if (!manager || manager.dataset.mingyuSettingsPanelAdded) return;
+        if (!manager) return;
+
+        // 如果設定面板已存在，不要重複建立
+        let existingPanel = document.getElementById('prompt-folding-settings');
+        if (existingPanel) {
+            console.log('[PF] 設定面板已存在，跳過建立');
+            return;
+        }
 
         const settingsHtml = `
-        <div id="prompt-folding-settings" class="range-block marginBot10" style="display: none;">
+        <div id="prompt-folding-settings" class="range-block marginBot10" style="display: none; width: 100%; box-sizing: border-box;">
             <div class="inline-drawer-content" style="display: block;">
-                <h3>分組標示設定</h3>
+                <div style="position: relative;">
+                    <h3>分組標示設定</h3>
+                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字模式。&#10;&#10;範例：&#10;• 輸入「=+」會匹配「=+」或「===」開頭的提示詞&#10;• 輸入「-+」會匹配「-+」或「---」開頭的提示詞&#10;• 輸入「=」會匹配單個「=」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。">?</span>
+                </div>
                 <label for="prompt-folding-dividers">
                     <span>分組標示符號（一行一個）</span>
                 </label>
-                <small class="notes">
-                    輸入用於標識群組標題的符號或文字模式。<br>
-                    <strong>預設：</strong><code>=</code>, <code>⭐─+</code>, <code>━+</code>
-                </small>
-                <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=&#10;⭐─+&#10;━+"></textarea>
+                <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=+&#10;-+"></textarea>
                 
                 <label class="checkbox_label marginTop10" for="prompt-folding-case-sensitive">
                     <input id="prompt-folding-case-sensitive" type="checkbox" />
@@ -284,7 +291,6 @@
         const header = manager.querySelector('.completion_prompt_manager_header');
         if (header) {
             header.insertAdjacentHTML('afterend', settingsHtml);
-            manager.dataset.mingyuSettingsPanelAdded = 'true';
             initializeSettingsPanel();
         }
     }
@@ -323,6 +329,9 @@
         settingsBtn.className = 'menu_button mingyu-settings-toggle';
         settingsBtn.title = '分組設定';
         settingsBtn.textContent = '⚙️';
+        
+        // 儲存設定按鈕的引用到 listContainer，方便其他函數存取
+        listContainer.dataset.settingsBtn = 'true';
         settingsBtn.addEventListener('click', () => {
             const settingsPanel = document.getElementById('prompt-folding-settings');
             if (settingsPanel) {
@@ -549,6 +558,16 @@
                 buildCollapsibleGroups(listContainer);
             }
 
+            // 關閉設定面板並更新按鈕狀態
+            const settingsPanel = document.getElementById('prompt-folding-settings');
+            const settingsBtn = document.querySelector('.mingyu-settings-toggle');
+            if (settingsPanel) {
+                settingsPanel.style.display = 'none';
+            }
+            if (settingsBtn) {
+                settingsBtn.classList.remove('active');
+            }
+
             toastr.success('設定已套用並重新分組');
         });
 
@@ -564,6 +583,16 @@
             const listContainer = document.querySelector(config.selectors.promptList);
             if (listContainer) {
                 buildCollapsibleGroups(listContainer);
+            }
+
+            // 關閉設定面板並更新按鈕狀態
+            const settingsPanel = document.getElementById('prompt-folding-settings');
+            const settingsBtn = document.querySelector('.mingyu-settings-toggle');
+            if (settingsPanel) {
+                settingsPanel.style.display = 'none';
+            }
+            if (settingsBtn) {
+                settingsBtn.classList.remove('active');
             }
 
             toastr.info('設定已重設為預設值');
