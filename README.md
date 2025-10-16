@@ -1,22 +1,33 @@
-# Collapsible Prompt for SillyTavern
+# Prompt Folding for SillyTavern
 
-An extension for SillyTavern that makes long prompts or text blocks collapsible, improving readability in the chat interface.
+An extension that groups prompts in the Prompt Manager into collapsible sections using simple header markers. Keeps your prompt list tidy and easier to navigate.
 
 ## Features
 
-*   Adds a button to collapse or expand long text blocks within the UI.
-*   Simple and lightweight with no external dependencies.
-*   Basic styling is provided in `collapsible-prompt.css`.
+- Group prompts by adding a header marker at the beginning of a prompt name (e.g., `=Title`, `--- Utilities`).
+- Each header becomes a collapsible section; items below it are grouped inside.
+- Expand/Collapse all groups with one click.
+- Enable/Disable grouping instantly.
+- Customizable header markers and case sensitivity (persisted in localStorage).
+- Lightweight and dependency-free. Styles provided by `collapsible-prompt.css`.
 
-## Installation Guide
+## Usage
 
-1.  Copy the repository URL: `https://github.com/iiimabbie/ST-PromptFolding`
-2.  In the SillyTavern UI, navigate to the **Extensions** tab.
-3.  Click the **Install Extension** button located in the top-right corner.
-4.  In the dialog box that appears, paste the repository URL into the first input field.
-5.  Click either **Install for all users** or **Install just for me**.
-6.  After the installation is complete, go to the **Manage Extensions** section.
-7.  Scroll down to find **Prompt Folding** and ensure the checkbox next to it is enabled.
+- Create a prompt with a name that starts with one of your header markers.
+  - Example: `= Tools` will create a group named `Tools`.
+  - All following prompts until the next header belong to that group.
+- Click the buttons in the Prompt Manager header to Expand All, Collapse All, open Settings, or toggle grouping.
+- Open Settings to configure header markers (one per line) and whether matching is case-sensitive.
+
+## Installation
+
+1. Copy the repository URL: `https://github.com/iiimabbie/ST-PromptFolding`
+2. In SillyTavern, open the **Extensions** tab.
+3. Click **Install Extension** (top-right).
+4. Paste the repository URL into the first input field.
+5. Click either **Install for all users** or **Install just for me**.
+6. After installation, go to **Manage Extensions**.
+7. Find **Prompt Folding** and ensure it is enabled.
 
 ## License
 
