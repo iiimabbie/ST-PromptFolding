@@ -250,6 +250,7 @@
         // 如果設定面板已存在，不要重複建立
         let existingPanel = document.getElementById('prompt-folding-settings');
         if (existingPanel) {
+            console.log('[PF] 設定面板已存在，跳過建立');
             return;
         }
 
@@ -282,15 +283,36 @@
         </div>
     `;
 
-        // 找到 footer，插入到 footer 之前（也就是 header 之後）
+        // Debug: 列出 manager 的所有子元素
+        console.log('[PF] Manager 子元素:', Array.from(manager.children).map(el => el.className || el.tagName));
+
+        // 嘗試多種方式找到插入位置
+        const header = manager.querySelector('.completion_prompt_manager_header');
         const footer = manager.querySelector('.completion_prompt_manager_footer');
-        if (footer) {
+        const listHead = manager.querySelector('.completion_prompt_manager_list_head');
+        
+        console.log('[PF] 找到的元素:', { 
+            header: !!header, 
+            footer: !!footer, 
+            listHead: !!listHead 
+        });
+
+        // 優先順序：header > listHead > footer
+        if (header) {
+            console.log('[PF] 使用 header.afterend 插入');
+            header.insertAdjacentHTML('afterend', settingsHtml);
+        } else if (listHead) {
+            console.log('[PF] 使用 listHead.beforebegin 插入');
+            listHead.insertAdjacentHTML('beforebegin', settingsHtml);
+        } else if (footer) {
+            console.log('[PF] 使用 footer.beforebegin 插入');
             footer.insertAdjacentHTML('beforebegin', settingsHtml);
         } else {
-            // 若找不到 footer，就插在容器最後
-            manager.insertAdjacentHTML('beforeend', settingsHtml);
+            // 最後的備用方案：插在 list 之前
+            console.log('[PF] 使用 listContainer.beforebegin 插入');
+            listContainer.insertAdjacentHTML('beforebegin', settingsHtml);
         }
-        // 僅初始化一次
+        
         initializeSettingsPanel();
     }
 
