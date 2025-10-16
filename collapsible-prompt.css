@@ -18,6 +18,7 @@
     position: relative;
     cursor: pointer;
     list-style: none; /* 移除原生箭頭 */
+    user-select: none; /* 防止點擊時選取文字 */
 }
 
 /* 移除 Webkit/Blink 和標準瀏覽器的原生箭頭 */
@@ -34,6 +35,8 @@
     color: #aaa;
     margin-right: 8px; /* 箭頭和文字之間的距離 */
     transition: transform 0.2s ease-in-out;
+    display: inline-block; /* 確保 transform 生效 */
+    flex-shrink: 0; /* 防止箭頭被壓縮 */
 }
 
 /* 當群組展開時，旋轉箭頭 */
@@ -65,4 +68,84 @@
     border-left: 1px solid #444;
     margin-left: 4px; /* 邊線和箭頭視覺上對齊 */
     margin-top: 5px; /* 內容和標題之間加點間距 */
+}
+
+/* 7. 拖曳狀態的視覺回饋 (新增)
+------------------------------------------------------------ */
+.mingyu-prompt-group > summary > li.completion_prompt_manager_prompt[draggable="true"] {
+    cursor: move;
+}
+
+/* 拖曳時的半透明效果 */
+.mingyu-prompt-group > summary > li.completion_prompt_manager_prompt.dragging {
+    opacity: 0.5;
+}
+
+/* 8. 隱藏被拖曳的 details 容器 (新增)
+------------------------------------------------------------ */
+.mingyu-prompt-group[style*="display: none"] {
+    display: none !important;
+}
+
+/* 9. 空群組的提示 (可選，新增)
+------------------------------------------------------------ */
+.mingyu-prompt-group-content:empty::after {
+    content: '(空群組)';
+    color: #666;
+    font-style: italic;
+    font-size: 0.9em;
+    padding: 5px 0;
+    display: block;
+}
+
+/* 10. Hover 效果改進 (新增)
+------------------------------------------------------------ */
+.mingyu-prompt-group > summary:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.mingyu-prompt-group > summary:hover::before {
+    color: #fff; /* 懸停時箭頭變亮 */
+}
+
+/* 11. 焦點狀態 (新增，改善鍵盤導航)
+------------------------------------------------------------ */
+.mingyu-prompt-group > summary:focus {
+    outline: 2px solid #4a9eff;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* 12. 過渡動畫改進 (新增)
+------------------------------------------------------------ */
+.mingyu-prompt-group-content {
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 13. 深色主題適配 (可選，新增)
+------------------------------------------------------------ */
+@media (prefers-color-scheme: light) {
+    .mingyu-prompt-group > summary::before {
+        color: #666;
+    }
+    
+    .mingyu-prompt-group-content {
+        border-left-color: #ddd;
+    }
+    
+    .mingyu-prompt-group > summary:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
 }
