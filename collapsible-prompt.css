@@ -180,7 +180,8 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 
 .mingyu-settings-toggle,
 .mingyu-expand-all,
-.mingyu-collapse-all {
+.mingyu-collapse-all,
+.mingyu-collapse-controls .menu_button.interactable {
     padding: 4px 8px;
     cursor: pointer;
     opacity: 0.7;
@@ -193,11 +194,13 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 
 .mingyu-settings-toggle:hover,
 .mingyu-expand-all:hover,
-.mingyu-collapse-all:hover {
-    opacity: 1;
+.mingyu-collapse-all:hover,
+.mingyu-collapse-controls .menu_button.interactable:hover {
+    opacity: 1 !important;
 }
 
-.mingyu-settings-toggle.active {
+.mingyu-settings-toggle.active,
+.menu_button:not(.disabled):hover {
     opacity: 1;
     background-color: rgba(74, 158, 255, 0.2);
     border-radius: 4px;
@@ -205,8 +208,9 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 
 .mingyu-settings-toggle:active,
 .mingyu-expand-all:active,
-.mingyu-collapse-all:active {
-    transform: scale(0.95);
+.mingyu-collapse-all:active,
+.mingyu-collapse-controls .menu_button.interactable:active {
+    transform: scale(0.95) !important;
 }
 
 /* 16. 設定面板樣式
@@ -259,3 +263,9 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     background-color: var(--SmartThemeQuotColor, rgba(255, 255, 255, 0.2));
     transform: scale(1.1);
 }
+
+/* 16. 處理掉原生奇怪的框線
+------------------------------------------------------------ */
+/*#completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt.completion_prompt_manager_prompt_disabled {*/
+/*border:0 !important;*/
+/*}*/
