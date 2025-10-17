@@ -366,7 +366,8 @@
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'menu_button';
         const updateBtnText = () => {
-            toggleBtn.textContent = state.isEnabled ? '分組:開' : '分組:關';
+            toggleBtn.title = state.isEnabled ? '點擊停用' : '點擊啟用';
+            toggleBtn.textContent = state.isEnabled ? '🟢' : '🔴';
         };
         toggleBtn.addEventListener('click', () => {
             state.isEnabled = !state.isEnabled;
