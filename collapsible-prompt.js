@@ -28,6 +28,7 @@
             featureEnabled: 'mingyu_collapsible_isEnabled',
             customDividers: 'mingyu_collapsible_customDividers',
             caseSensitive: 'mingyu_collapsible_caseSensitive',
+            foldingMode: 'mingyu_collapsible_foldingMode',
         },
         // CSS class 名稱
         classNames: {
@@ -47,6 +48,7 @@
         observers: new WeakMap(), // 儲存每個 listContainer 的 observer
         customDividers: JSON.parse(localStorage.getItem(config.storageKeys.customDividers) || 'null') || config.defaultDividers,
         caseSensitive: localStorage.getItem(config.storageKeys.caseSensitive) === 'true',
+        foldingMode: localStorage.getItem(config.storageKeys.foldingMode) || 'standard',
     };
 
     /**
@@ -71,6 +73,7 @@
     function saveCustomSettings() {
         localStorage.setItem(config.storageKeys.customDividers, JSON.stringify(state.customDividers));
         localStorage.setItem(config.storageKeys.caseSensitive, state.caseSensitive);
+        localStorage.setItem(config.storageKeys.foldingMode, state.foldingMode);
         dividerRegex = buildDividerRegex();
     }
 
@@ -167,45 +170,102 @@
             if (!state.isEnabled) {
                 allItems.forEach(item => listContainer.appendChild(item));
             } else {
-                let currentGroupContent = null;
+                // --- 標準模式邏輯 ---
+                const buildStandardGroups = () => {
+                    let currentGroupContent = null;
+                    allItems.forEach(item => {
+                        const headerInfo = getGroupHeaderInfo(item);
+                        if (headerInfo) {
+                            // 這是個標題，建立一個新的 <details> 群組
+                            item.classList.add(config.classNames.isGroupHeader);
+                            const details = document.createElement('details');
+                            details.className = config.classNames.group;
+                            details.open = state.openGroups[headerInfo.stableKey] !== false; // 預設展開
+                            details.dataset.groupKey = headerInfo.stableKey;
+                            const summary = document.createElement('summary');
+                            const link = item.querySelector(config.selectors.promptLink);
+                            if (link) link.textContent = headerInfo.originalName;
+                            summary.appendChild(item);
+                            details.appendChild(summary);
+                            currentGroupContent = document.createElement('div');
+                            currentGroupContent.className = config.classNames.groupContent;
+                            details.appendChild(currentGroupContent);
+                            details.addEventListener('toggle', () => {
+                                state.openGroups[headerInfo.stableKey] = details.open;
+                                localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+                            });
+                            listContainer.appendChild(details);
+                        } else if (currentGroupContent) {
+                            // 這是個普通項目，且前面有群組，就放進去
+                            currentGroupContent.appendChild(item);
+                        } else {
+                            // 這是個普通項目，但前面沒有群組，直接放在最外層
+                            listContainer.appendChild(item);
+                        }
+                    });
+                };
 
-                allItems.forEach(item => {
-                    const headerInfo = getGroupHeaderInfo(item);
+                // --- 包覆模式邏輯 ---
+                const buildSandwichGroups = () => {
+                    let itemsToProcess = [...allItems];
+                    const nodesToAdd = [];
 
-                    if (headerInfo) {
-                        // 這是個標題，建立一個新的 <details> 群組
-                        item.classList.add(config.classNames.isGroupHeader);
+                    while (itemsToProcess.length > 0) {
+                        const currentItem = itemsToProcess.shift();
+                        const headerInfo = getGroupHeaderInfo(currentItem);
 
-                        const details = document.createElement('details');
-                        details.className = config.classNames.group;
-                        details.open = state.openGroups[headerInfo.stableKey] !== false; // 預設展開
-                        details.dataset.groupKey = headerInfo.stableKey;
+                        if (!headerInfo) {
+                            nodesToAdd.push(currentItem);
+                            continue;
+                        }
 
-                        const summary = document.createElement('summary');
-                        const link = item.querySelector(config.selectors.promptLink);
-                        if (link) link.textContent = headerInfo.originalName;
-
-                        summary.appendChild(item);
-                        details.appendChild(summary);
-
-                        currentGroupContent = document.createElement('div');
-                        currentGroupContent.className = config.classNames.groupContent;
-                        details.appendChild(currentGroupContent);
-
-                        details.addEventListener('toggle', () => {
-                            state.openGroups[headerInfo.stableKey] = details.open;
-                            localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+                        // 这是一个標頭，尋找配對的結束標頭
+                        const closingHeaderIndex = itemsToProcess.findIndex(item => {
+                            const otherHeader = getGroupHeaderInfo(item);
+                            return otherHeader && otherHeader.stableKey === headerInfo.stableKey;
                         });
 
-                        listContainer.appendChild(details);
-                    } else if (currentGroupContent) {
-                        // 這是個普通項目，且前面有群組，就放進去
-                        currentGroupContent.appendChild(item);
-                    } else {
-                        // 這是個普通項目，但前面沒有群組，直接放在最外層
-                        listContainer.appendChild(item);
+                        if (closingHeaderIndex !== -1) {
+                            // 修正後邏輯：要摺疊的內容包含從開始到結束的所有項目(包含結束標頭)。
+                            const contentItems = itemsToProcess.splice(0, closingHeaderIndex + 1);
+
+                            currentItem.classList.add(config.classNames.isGroupHeader);
+                            const details = document.createElement('details');
+                            details.className = config.classNames.group;
+                            details.open = state.openGroups[headerInfo.stableKey] !== false;
+                            details.dataset.groupKey = headerInfo.stableKey;
+
+                            const summary = document.createElement('summary');
+                            const link = currentItem.querySelector(config.selectors.promptLink);
+                            if (link) link.textContent = headerInfo.originalName;
+                            
+                            summary.appendChild(currentItem);
+                            details.appendChild(summary);
+
+                            const groupContent = document.createElement('div');
+                            groupContent.className = config.classNames.groupContent;
+                            contentItems.forEach(contentItem => groupContent.appendChild(contentItem));
+                            details.appendChild(groupContent);
+
+                            details.addEventListener('toggle', () => {
+                                state.openGroups[headerInfo.stableKey] = details.open;
+                                localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+                            });
+
+                            nodesToAdd.push(details);
+                        } else {
+                            // 找不到配對的結束標頭，當作一般項目處理
+                            nodesToAdd.push(currentItem);
+                        }
                     }
-                });
+                    nodesToAdd.forEach(node => listContainer.appendChild(node));
+                };
+
+                if (state.foldingMode === 'sandwich') {
+                    buildSandwichGroups();
+                } else {
+                    buildStandardGroups();
+                }
             }
         } catch (error) {
             console.error('[PF] 分組過程發生錯誤:', error);
@@ -255,8 +315,9 @@
             <div class="inline-drawer-content" style="display: block;">
                 <div style="position: relative;">
                     <h3>分組標示設定</h3>
-                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「===」會匹配「===」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。">?</span>
+                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;此設定對「標準模式」和「包覆模式」皆有效。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞">?</span>
                 </div>
+                <p class="settings-subtitle" style="font-size: 12px; opacity: 0.7; margin-top: -5px; margin-bottom: 10px;">此設定對所有摺疊模式皆有效。</p>
                 <label for="prompt-folding-dividers">
                     <span>分組標示符號（一行一個）</span>
                 </label>
@@ -266,6 +327,18 @@
                     <input id="prompt-folding-case-sensitive" type="checkbox" />
                     <span>區分大小寫</span>
                 </label>
+
+                <h4 class="marginTop10">摺疊模式</h4>
+                <div id="prompt-folding-mode-radios" class="flex-container">
+                    <label class="radio_label" title="標準模式：從一個標頭開始，摺疊其後的所有項目，直到遇到下一個標頭為止。">
+                        <input type="radio" name="folding-mode" value="standard" id="prompt-folding-mode-standard">
+                        <span>標準模式</span>
+                    </label>
+                    <label class="radio_label" title="包覆模式：尋找一對相同的標頭，並將這對標頭以及它們之間的所有項目摺疊成一個群組。">
+                        <input type="radio" name="folding-mode" value="sandwich" id="prompt-folding-mode-sandwich">
+                        <span>包覆模式</span>
+                    </label>
+                </div>
 
                 <div class="flex-container justifyCenter marginTop10">
                     <div id="prompt-folding-apply" class="menu_button menu_button_icon">
@@ -544,6 +617,17 @@
         textArea.value = state.customDividers.join('\n');
         caseCheckbox.checked = state.caseSensitive;
 
+        // 載入摺疊模式設定
+        const standardRadio = document.getElementById('prompt-folding-mode-standard');
+        const sandwichRadio = document.getElementById('prompt-folding-mode-sandwich');
+        if (standardRadio && sandwichRadio) {
+            if (state.foldingMode === 'sandwich') {
+                sandwichRadio.checked = true;
+            } else {
+                standardRadio.checked = true;
+            }
+        }
+
         // 小工具：關閉設定面板並同步按鈕狀態
         const closeSettingsPanel = () => {
             const settingsPanel = document.getElementById('prompt-folding-settings');
@@ -566,6 +650,11 @@
 
             state.customDividers = newDividers;
             state.caseSensitive = caseCheckbox.checked;
+
+            // 讀取摺疊模式
+            const selectedMode = document.querySelector('input[name="folding-mode"]:checked').value;
+            state.foldingMode = selectedMode || 'standard';
+
             saveCustomSettings();
 
             const listContainer = document.querySelector(config.selectors.promptList);
@@ -579,10 +668,14 @@
         resetButton.addEventListener('click', () => {
             state.customDividers = [...config.defaultDividers];
             state.caseSensitive = false;
+            state.foldingMode = 'standard'; // 重設摺疊模式
             saveCustomSettings();
 
             textArea.value = state.customDividers.join('\n');
             caseCheckbox.checked = false;
+            // 更新 radio UI
+            const standardRadio = document.getElementById('prompt-folding-mode-standard');
+            if (standardRadio) standardRadio.checked = true;
 
             const listContainer = document.querySelector(config.selectors.promptList);
             if (listContainer) buildCollapsibleGroups(listContainer);
