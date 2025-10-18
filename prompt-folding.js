@@ -27,31 +27,13 @@ function getGroupHeaderInfo(promptItem) {
 }
 
 /**
- * 清理已不存在的群組狀態
- * @param {Array} currentHeaders - 目前存在的標題資訊列表
- */
-function cleanupOldGroupStates(currentHeaders) {
-    const currentKeys = new Set(currentHeaders.map(h => h.stableKey));
-    const savedStates = state.openGroups;
-    let needsUpdate = false;
-
-    for (const key in savedStates) {
-        if (!currentKeys.has(key)) {
-            delete savedStates[key];
-            needsUpdate = true;
-        }
-    }
-
-    if (needsUpdate) {
-        localStorage.setItem(config.storageKeys.openStates, JSON.stringify(savedStates));
-    }
-}
-
-/**
  * 核心函式：將提示詞列表整理成可摺疊的群組
  * @param {HTMLElement} listContainer - 提示詞列表的 UL 容器
  */
 export function buildCollapsibleGroups(listContainer) {
+    // 強制從 localStorage 同步最新的開合狀態，確保狀態不會因UI重建而丟失
+    state.openGroups = JSON.parse(localStorage.getItem(config.storageKeys.openStates) || '{}');
+
     if (!listContainer || state.isProcessing) return;
 
     state.isProcessing = true;
@@ -80,9 +62,6 @@ export function buildCollapsibleGroups(listContainer) {
                 currentHeaders.push(headerInfo);
             }
         });
-
-        // 2. 清理舊的群組狀態
-        cleanupOldGroupStates(currentHeaders);
 
         // 3. 清空容器
         listContainer.innerHTML = '';
