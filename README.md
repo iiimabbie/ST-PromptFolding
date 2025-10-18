@@ -9,15 +9,31 @@ An extension that groups prompts in the Prompt Manager into collapsible sections
 - Expand/Collapse all groups with one click.
 - Enable/Disable grouping instantly.
 - Customizable header markers and case sensitivity (persisted in localStorage).
+- Supports two different folding modes (Standard and Sandwich).
 - Lightweight and dependency-free. Styles provided by `collapsible-prompt.css`.
+
+## Folding Modes
+
+This extension supports two different folding modes, which can be selected in the settings panel.
+
+- **Standard Mode (Default):** When a header is found, it will group all subsequent items under it until the next header is encountered.
+
+- **Sandwich Mode:** This mode requires a pair of identical headers. It will group the opening header, the closing header, and all items in between into a single collapsible section.
+  - *Example:*
+    ```
+    ==== Chapter 1 Start ====
+    Prompt A
+    Prompt B
+    ==== Chapter 1 Start ====
+    ```
+    This will become a single foldable group titled `==== Chapter 1 Start ====`.
 
 ## Usage
 
 - Create a prompt with a name that starts with one of your header markers.
-  - Example: `= Tools` will create a group named `Tools`.
-  - All following prompts until the next header belong to that group.
+- Depending on the selected mode, the grouping behavior will change.
 - Click the buttons in the Prompt Manager header to Expand All, Collapse All, open Settings, or toggle grouping.
-- Open Settings to configure header markers (one per line) and whether matching is case-sensitive.
+- Open Settings to configure header markers, folding mode, and case sensitivity.
 
 ## Installation
 
