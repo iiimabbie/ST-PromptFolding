@@ -94,13 +94,9 @@
 
         const match = dividerRegex.exec(originalName);
         if (match) {
-            const cleanName = originalName.substring(match[0].length).trim();
-            // 使用更穩定的 key：結合索引位置
-            const stableKey = `${match[0]}_${cleanName}`;
             return {
-                cleanName: cleanName,      // 整理過的標題名稱
                 originalName: originalName, // 原始的完整名稱
-                stableKey: stableKey       // 穩定的 key，用於儲存狀態
+                stableKey: originalName       // 穩定的 key，用於儲存狀態
             };
         }
         return null;
@@ -187,7 +183,7 @@
 
                         const summary = document.createElement('summary');
                         const link = item.querySelector(config.selectors.promptLink);
-                        if (link) link.textContent = headerInfo.cleanName;
+                        if (link) link.textContent = headerInfo.originalName;
 
                         summary.appendChild(item);
                         details.appendChild(summary);
@@ -259,7 +255,7 @@
             <div class="inline-drawer-content" style="display: block;">
                 <div style="position: relative;">
                     <h3>分組標示設定</h3>
-                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「===」會匹配「===」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。&#10;被當作標頭的符號不會出現在標題上。">?</span>
+                    <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「===」會匹配「===」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞&#10;&#10;每行一個符號，可設定多個不同的分組標示。">?</span>
                 </div>
                 <label for="prompt-folding-dividers">
                     <span>分組標示符號（一行一個）</span>
