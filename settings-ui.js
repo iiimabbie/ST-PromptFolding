@@ -67,6 +67,22 @@ function initializeSettingsPanel() {
         } else {
             standardRadio.checked = true;
         }
+
+        // 為模式切換添加即時監聽
+        const modeRadios = document.getElementById('prompt-folding-mode-radios');
+        if (modeRadios) {
+            modeRadios.addEventListener('change', (event) => {
+                if (event.target.name === 'folding-mode') {
+                    state.foldingMode = event.target.value;
+                    saveCustomSettings();
+                    const listContainer = document.querySelector(config.selectors.promptList);
+                    if (listContainer) {
+                        buildCollapsibleGroups(listContainer);
+                    }
+                    toastr.success(`模式已切換為: ${state.foldingMode === 'standard' ? '標準模式' : '包覆模式'}`);
+                }
+            });
+        }
     }
 
     const closeSettingsPanel = () => {
