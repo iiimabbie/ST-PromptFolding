@@ -216,6 +216,7 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 /* 16. 設定面板樣式
 ------------------------------------------------------------ */
 #prompt-folding-settings {
+    position: relative; /* 為了讓絕對定位的子元素 (如版本資訊) 相對此容器定位 */
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 15px;
@@ -269,3 +270,14 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 /*#completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt.completion_prompt_manager_prompt_disabled {*/
 /*border:0 !important;*/
 /*}*/
+
+/* 17. 版本資訊樣式
+------------------------------------------------------------ */
+#prompt-folding-version-info {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    font-size: 0.7em;
+    color: #888;
+    opacity: 0.7;
+}

@@ -134,4 +134,15 @@ function initializeSettingsPanel() {
         closeSettingsPanel();
         toastr.info('設定已重設為預設值');
     });
+
+    // 顯示版本資訊
+    fetch('/scripts/extensions/third-party/ST-PromptFolding/manifest.json')
+        .then(response => response.json())
+        .then(manifest => {
+            const versionInfoEl = document.getElementById('prompt-folding-version-info');
+            if (versionInfoEl) {
+                versionInfoEl.textContent = `${manifest.display_name} v${manifest.version} © ${manifest.author}`;
+            }
+        })
+        .catch(err => console.error('[PF] 無法載入 manifest.json 獲取版本號:', err));
 }
