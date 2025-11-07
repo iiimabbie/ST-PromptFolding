@@ -84,7 +84,17 @@ export function buildCollapsibleGroups(listContainer) {
                         details.dataset.groupKey = headerInfo.stableKey;
                         const summary = document.createElement('summary');
                         const link = item.querySelector(config.selectors.promptLink);
-                        if (link) link.textContent = headerInfo.originalName;
+                        if (link) {
+                            link.textContent = headerInfo.originalName;
+                            // 讓只有文字可以點擊
+                            link.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                details.open = !details.open;
+                            });
+                        }
+                        // 防止點擊 summary 的其他地方導致開合
+                        summary.addEventListener('click', (e) => e.preventDefault());
                         summary.appendChild(item);
                         details.appendChild(summary);
                         currentGroupContent = document.createElement('div');
@@ -137,7 +147,17 @@ export function buildCollapsibleGroups(listContainer) {
 
                         const summary = document.createElement('summary');
                         const link = currentItem.querySelector(config.selectors.promptLink);
-                        if (link) link.textContent = headerInfo.originalName;
+                        if (link) {
+                            link.textContent = headerInfo.originalName;
+                            // 讓只有文字可以點擊
+                            link.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                details.open = !details.open;
+                            });
+                        }
+                        // 防止點擊 summary 的其他地方導致開合
+                        summary.addEventListener('click', (e) => e.preventDefault());
                         
                         summary.appendChild(currentItem);
                         details.appendChild(summary);
