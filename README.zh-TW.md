@@ -1,3 +1,7 @@
+[English](README.md)
+
+---
+
 # SillyTavern 提示詞分組（可摺疊）擴充功能
 
 將提示詞管理器中的項目，透過簡單的「標頭標記」分組為可摺疊區塊，讓清單更整齊、瀏覽更高效。
@@ -48,7 +52,3 @@
 ## 授權
 
 本專案依 [LICENSE](LICENSE) 條款授權。
-
----
-
-[English](README.md)
