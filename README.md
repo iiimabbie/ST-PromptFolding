@@ -1,3 +1,7 @@
+[中文 (繁體)](README.zh-TW.md)
+
+---
+
 # Prompt Folding for SillyTavern
 
 An extension that groups prompts in the Prompt Manager into collapsible sections using simple header markers. Keeps your prompt list tidy and easier to navigate.
@@ -48,7 +52,3 @@ This extension supports two different folding modes, which can be selected in th
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
-
----
-
-[中文 (繁體)](README.zh-TW.md)
