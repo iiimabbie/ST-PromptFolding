@@ -16,9 +16,19 @@
     display: flex; /* 使用 Flexbox 來對齊箭頭和標題文字 */
     align-items: center; /* 垂直置中 */
     position: relative;
-    cursor: pointer;
+    /* cursor: pointer;  <-- 已由 JS 控制，只有文字可點擊 */
     list-style: none; /* 移除原生箭頭 */
     user-select: none; /* 防止點擊時選取文字 */
+}
+
+/* 讓作為標題的 LI 內的連結有手形游標 */
+.mingyu-prompt-group > summary li.is-group-header a.prompt-manager-inspect-action {
+    cursor: pointer;
+}
+
+/* 滑鼠懸停時加上底線，提示可點擊 */
+.mingyu-prompt-group > summary li.is-group-header a.prompt-manager-inspect-action:hover {
+    text-decoration: underline;
 }
 
 /* 移除 Webkit/Blink 和標準瀏覽器的原生箭頭 */
