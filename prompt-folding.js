@@ -175,6 +175,23 @@ export function buildCollapsibleGroups(listContainer) {
               closingHeaderIndex + 1
             );
 
+            const groupKey = headerInfo.stableKey;
+            const headerId = currentItem.dataset.pmIdentifier;
+
+            // 1. 填充狀態物件
+            state.groupHierarchy[groupKey] = [];
+            state.groupKeyToHeaderId[groupKey] = headerId;
+            const isEnabled = !currentItem.classList.contains('completion_prompt_manager_prompt_disabled');
+            state.groupHeaderStatus[groupKey] = isEnabled;
+
+            // 2. 將所有子項目的 ID 加入 hierarchy
+            contentItems.forEach(childItem => {
+                const childId = childItem.dataset.pmIdentifier;
+                if (childId) {
+                    state.groupHierarchy[groupKey].push(childId);
+                }
+            });
+
             currentItem.classList.add(config.classNames.isGroupHeader);
             const details = document.createElement('details');
             details.className = config.classNames.group;
