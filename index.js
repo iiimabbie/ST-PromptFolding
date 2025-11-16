@@ -289,14 +289,13 @@ function updateGroupHeaderStatus(promptManager) {
     const promptOrder = promptManager.getPromptOrderForCharacter(character);
     
     // 更新每個群組標頭的狀態
-    for (const groupKey of Object.keys(state.groupHierarchy)) {
+    for (const headerId of Object.keys(state.groupHierarchy)) {
         // 從 groupKey 找到對應的 prompt identifier
         // 在 buildCollapsibleGroups 時記錄 groupKey -> headerId 的映射
-        const headerId = state.groupKeyToHeaderId[groupKey];
         if (!headerId) continue;
         
         const entry = promptOrder.find(e => e.identifier === headerId);
-        state.groupHeaderStatus[groupKey] = entry?.enabled ?? true;
+        state.groupHeaderStatus[headerId] = entry?.enabled ?? true;
     }
 }
 

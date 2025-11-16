@@ -15,14 +15,16 @@ function getGroupHeaderInfo(promptItem) {
   if (!promptItem.dataset.originalName) {
     promptItem.dataset.originalName = originalName;
   }
+  // 每個項目的唯一 key
+  const createHeaderInfo = (name) => ({
+      originalName: name,
+      stableKey: promptItem.dataset.pmIdentifier, // 使用絕對唯一的 ID 作為 Key
+  });
 
   // 1. 首先，檢查是否匹配用戶在設定中定義的特定前綴
   const match = dividerRegex.exec(originalName);
   if (match) {
-    return {
-      originalName: originalName,
-      stableKey: originalName,
-    };
+    return createHeaderInfo(originalName);
   }
 
   // 2. 如果不匹配，則檢查整個字串是否只由符號、標點和空白組成
@@ -32,10 +34,7 @@ function getGroupHeaderInfo(promptItem) {
   // u flag 是為了讓 \p{...} 生效 (Unicode)
   const symbolsOnlyRegex = /^[\s\p{P}\p{S}]+$/u;
   if (originalName.length > 0 && symbolsOnlyRegex.test(originalName)) {
-      return {
-          originalName: originalName,
-          stableKey: originalName, // 對於純符號，其本身就是穩定的 Key
-      };
+      return createHeaderInfo(originalName);
   }
 
   return null;
@@ -101,13 +100,11 @@ export function buildCollapsibleGroups(listContainer) {
           const headerInfo = getGroupHeaderInfo(item);
           if (headerInfo) {
             // 是標題，建立一個新的 <details> 群組
-            currentGroupKey = headerInfo.stableKey; // 更新當前的群組 Key
             const groupKey = headerInfo.stableKey;
-            const headerId = item.dataset.pmIdentifier;
+            currentGroupKey = groupKey; // 更新當前的群組 Key
 
             // 填充狀態物件
             state.groupHierarchy[groupKey] = [];
-            state.groupKeyToHeaderId[groupKey] = headerId;
             // 透過檢查 class 來判斷標頭當前的啟用狀態
             const isEnabled = !item.classList.contains('completion_prompt_manager_prompt_disabled');
             state.groupHeaderStatus[groupKey] = isEnabled;
@@ -116,7 +113,7 @@ export function buildCollapsibleGroups(listContainer) {
             const details = document.createElement('details');
             details.className = config.classNames.group;
             details.open = state.openGroups[headerInfo.stableKey] !== false; // 預設展開
-            details.dataset.groupKey = headerInfo.stableKey;
+            details.dataset.groupKey = groupKey;
             const summary = document.createElement('summary');
             const link = item.querySelector(config.selectors.promptLink);
             if (link) {
@@ -136,7 +133,7 @@ export function buildCollapsibleGroups(listContainer) {
             currentGroupContent.className = config.classNames.groupContent;
             details.appendChild(currentGroupContent);
             details.addEventListener('toggle', () => {
-              state.openGroups[headerInfo.stableKey] = details.open;
+              state.openGroups[headerInfo.originalName] = details.open;
               localStorage.setItem(
                 config.storageKeys.openStates,
                 JSON.stringify(state.openGroups)
@@ -179,7 +176,7 @@ export function buildCollapsibleGroups(listContainer) {
           const closingHeaderIndex = itemsToProcess.findIndex((item) => {
             const otherHeader = getGroupHeaderInfo(item);
             return (
-              otherHeader && otherHeader.stableKey === headerInfo.stableKey
+              otherHeader && otherHeader.originalName === headerInfo.originalName
             );
           });
 
@@ -191,11 +188,9 @@ export function buildCollapsibleGroups(listContainer) {
             );
 
             const groupKey = headerInfo.stableKey;
-            const headerId = currentItem.dataset.pmIdentifier;
 
             // 1. 填充狀態物件
             state.groupHierarchy[groupKey] = [];
-            state.groupKeyToHeaderId[groupKey] = headerId;
             const isEnabled = !currentItem.classList.contains('completion_prompt_manager_prompt_disabled');
             state.groupHeaderStatus[groupKey] = isEnabled;
 
@@ -210,8 +205,8 @@ export function buildCollapsibleGroups(listContainer) {
             currentItem.classList.add(config.classNames.isGroupHeader);
             const details = document.createElement('details');
             details.className = config.classNames.group;
-            details.open = state.openGroups[headerInfo.stableKey] !== false;
-            details.dataset.groupKey = headerInfo.stableKey;
+            details.open = state.openGroups[headerInfo.originalName] !== false;
+            details.dataset.groupKey = groupKey;
 
             const summary = document.createElement('summary');
             const link = currentItem.querySelector(config.selectors.promptLink);
@@ -238,7 +233,7 @@ export function buildCollapsibleGroups(listContainer) {
             details.appendChild(groupContent);
 
             details.addEventListener('toggle', () => {
-              state.openGroups[headerInfo.stableKey] = details.open;
+              state.openGroups[headerInfo.originalName] = details.open;
               localStorage.setItem(
                 config.storageKeys.openStates,
                 JSON.stringify(state.openGroups)

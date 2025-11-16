@@ -39,7 +39,6 @@ export let state = {
 
     groupHierarchy: {}, // { 'group-key': ['child-id-1', 'child-id-2'] }
     groupHeaderStatus: {}, // { 'group-key': true/false }
-    groupKeyToHeaderId: {}, // { 'groupKey': 'headerId' }
 };
 
 export let dividerRegex = buildDividerRegex();
