@@ -21,20 +21,10 @@ function getGroupHeaderInfo(promptItem) {
       stableKey: promptItem.dataset.pmIdentifier, // 使用絕對唯一的 ID 作為 Key
   });
 
-  // 1. 首先，檢查是否匹配用戶在設定中定義的特定前綴
+  // 檢查是否匹配用戶在設定中定義的特定前綴
   const match = dividerRegex.exec(originalName);
   if (match) {
     return createHeaderInfo(originalName);
-  }
-
-  // 2. 如果不匹配，則檢查整個字串是否只由符號、標點和空白組成
-  // \p{P} 匹配任何種類的標點符號
-  // \p{S} 匹配數學符號、貨幣符號、表情符號等
-  // \s  匹配空白字符
-  // u flag 是為了讓 \p{...} 生效 (Unicode)
-  const symbolsOnlyRegex = /^[\s\p{P}\p{S}]+$/u;
-  if (originalName.length > 0 && symbolsOnlyRegex.test(originalName)) {
-      return createHeaderInfo(originalName);
   }
 
   return null;
