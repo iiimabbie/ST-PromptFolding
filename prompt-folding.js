@@ -80,11 +80,13 @@ export function buildCollapsibleGroups(listContainer) {
   state.isProcessing = true;
 
   try {
-    // 1. 先把所有項目拿出來，還原成乾淨的狀態
+    // 1. 清理與還原 (所有模式共用)
+    // querySelectorAll 會自動抓到 nested items (details 裡的 li)
     const allItems = Array.from(listContainer.querySelectorAll(config.selectors.promptListItem));
-    
+
     allItems.forEach(item => {
       item.classList.remove(config.classNames.isGroupHeader);
+      item.style.display = '';
       // 還原名稱
       if (item.dataset.originalName) {
         const link = item.querySelector(config.selectors.promptLink);
@@ -98,6 +100,31 @@ export function buildCollapsibleGroups(listContainer) {
     state.groupHeaderStatus = {};
 
     // 3. 沒啟用就直接塞回去
+    if (!state.isEnabled) {
+      allItems.forEach(item => listContainer.appendChild(item));
+      return; 
+    }
+
+    // 2. 搜尋模式檢查
+    // 如果有輸入搜尋字，直接跑過濾，忽略後面所有分組邏輯
+    if (state.searchQuery) {
+        const query = state.searchQuery; // 已經在 input event轉成小寫了
+        allItems.forEach(item => {
+            // 為了防止資料遺失，必須把所有項目都塞回 DOM
+            // 只透過 CSS 來控制顯示與否
+            listContainer.appendChild(item);
+            const name = item.dataset.originalName || item.textContent;
+            if (name.toLowerCase().includes(query)) {
+                item.style.display = ''; // 顯示匹配項
+            } else {
+                item.style.display = 'none'; // 隱藏不匹配項
+            }
+        });
+        // 搜尋模式下，不跑分組邏輯，直接結束
+        return;
+    }
+
+    // 3. 未啟用功能：全部塞回去
     if (!state.isEnabled) {
       allItems.forEach(item => listContainer.appendChild(item));
       return; 

@@ -70,6 +70,21 @@ function setupToggleButton(listContainer) {
     const container = document.createElement('div');
     container.className = 'mingyu-collapse-controls';
 
+    // 1. 搜尋框
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = '搜尋提示詞...';
+    searchInput.className = 'mingyu-prompt-search text_pole'; // 使用 ST 原生樣式 text_pole
+    searchInput.value = state.searchQuery;
+
+    // 監聽輸入：更新 state -> 重繪
+    searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.toLowerCase().trim();
+        buildCollapsibleGroups(listContainer);
+    });
+
+    container.appendChild(searchInput);
+
     // 功能按鈕
     container.append(
         createBtn('⬇️', '展開所有', () => toggleAllGroups(listContainer, true), 'mingyu-expand-all'),

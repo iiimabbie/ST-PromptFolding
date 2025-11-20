@@ -39,6 +39,9 @@ export let state = {
     observers: new WeakMap(), 
     groupHierarchy: {},    // key: groupKey, value: [childId...]
     groupHeaderStatus: {}, // key: groupKey, value: boolean
+
+    // 搜尋狀態
+    searchQuery: '',
 };
 
 // 初始化 Regex
