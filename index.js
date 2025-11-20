@@ -80,12 +80,13 @@ function setupToggleButton(listContainer) {
     // --- 搜尋框 ---
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
-    searchInput.placeholder = '搜尋...'; // 簡短一點
+    searchInput.placeholder = '搜尋...(或是輸入 on / off)'; // 簡短一點
     searchInput.className = 'mingyu-prompt-search text_pole'; // 使用 ST 原生樣式 text_pole
     searchInput.value = state.searchQuery;
     
     // 監聽輸入：更新 state -> 重繪
     searchInput.addEventListener('input', (e) => {
+        // 轉小寫，這樣輸入 ON/On/off 都能通
         state.searchQuery = e.target.value.toLowerCase().trim();
         buildCollapsibleGroups(listContainer);
     });

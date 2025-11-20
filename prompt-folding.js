@@ -109,16 +109,33 @@ export function buildCollapsibleGroups(listContainer) {
     // 如果有輸入搜尋字，直接跑過濾，忽略後面所有分組邏輯
     if (state.searchQuery) {
         const query = state.searchQuery; // 已經在 input event轉成小寫了
+
+        // 檢查是否為特殊指令
+        const isCommandOn = query === 'on';
+        const isCommandOff = query === 'off';
+
         allItems.forEach(item => {
             // 為了防止資料遺失，必須把所有項目都塞回 DOM
             // 只透過 CSS 來控制顯示與否
             listContainer.appendChild(item);
-            const name = item.dataset.originalName || item.textContent;
-            if (name.toLowerCase().includes(query)) {
-                item.style.display = ''; // 顯示匹配項
+
+            let isMatch = false;
+            // ST 判斷是否禁用的 class
+            const isDisabled = item.classList.contains('completion_prompt_manager_prompt_disabled');
+
+            if (isCommandOn) {
+                // 指令 on: 顯示未禁用的 (即開啟的)
+                isMatch = !isDisabled;
+            } else if (isCommandOff) {
+                // 指令 off: 顯示被禁用的
+                isMatch = isDisabled;
             } else {
-                item.style.display = 'none'; // 隱藏不匹配項
+                // 普通搜尋: 比對名稱
+                const name = item.dataset.originalName || item.textContent;
+                isMatch = name.toLowerCase().includes(query);
             }
+            
+            item.style.display = isMatch ? '' : 'none';
         });
         // 搜尋模式下，不跑分組邏輯，直接結束
         return;
