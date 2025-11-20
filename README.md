@@ -14,6 +14,7 @@ An extension that organizes your SillyTavern Prompt Manager into clean, collapsi
   - **Enable/Disable**: **(New in v2.2+)** Disabling a group header prompt will automatically **filter out all prompts inside that group**. They will not be sent to the AI. This allows for quick context switching.
 - **Two Folding Modes**: Supports "Standard Mode" and "Sandwich Mode" to suit your organization style.
 - **Batch Actions**: Expand All / Collapse All with a single click.
+- **Smart Search**: Real-time filtering. Type text to search prompts by name, or use on / off commands to filter by enabled status.
 - **Customizable**: Define your own header markers via settings.
 - **Lightweight**: Dependency-free and integrates seamlessly with the existing UI.
 
@@ -49,7 +50,12 @@ Requires a pair of identical headers. It groups the opening header, the closing 
       - **Click Name**: Toggle expand/collapse.
       - **Toggle Switch**: Disabling the header's switch will visually dim the group content and prevent those prompts from being sent to the LLM.
 
-3.  **Toolbar Buttons**:
+3.  **Search & Filter**:
+
+      - **Text Search**: Type in the search bar to filter prompts by name instantly.
+      - **Status Filter**: Type on to view only active prompts, or off to view only disabled ones.
+
+4.  **Toolbar Buttons**:
 
       - `⬇️` / `⬆️`: Expand or Collapse all groups.
       - `🔴` / `🟢`: Toggle the extension functionality on/off (does not delete prompts, just removes grouping).
