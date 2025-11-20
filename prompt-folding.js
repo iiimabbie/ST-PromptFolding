@@ -1,302 +1,200 @@
 import { config, state, dividerRegex } from './state.js';
 
 /**
- * 分析一個提示詞 LI 元素，判斷它是否為分組標題
- * @param {HTMLElement} promptItem - 提示詞的 LI 元素
- * @returns {object|null} 如果是標題，回傳標題資訊；否則回傳 null
+ * 判斷 LI 是不是標題
+ * @returns headerInfo object or null
  */
 function getGroupHeaderInfo(promptItem) {
-  const linkElement = promptItem.querySelector(config.selectors.promptLink);
-  if (!linkElement) return null;
+  const link = promptItem.querySelector(config.selectors.promptLink);
+  if (!link) return null;
 
-  const originalName = linkElement.textContent.trim();
+  const originalName = link.textContent.trim();
+  // 記錄原始名稱，避免重複處理時名字壞掉
+  if (!promptItem.dataset.originalName) promptItem.dataset.originalName = originalName;
 
-  // 確保每個項目都有 originalName，即使不是標題
-  if (!promptItem.dataset.originalName) {
-    promptItem.dataset.originalName = originalName;
-  }
-  // 每個項目的唯一 key
-  const createHeaderInfo = (name) => ({
-      originalName: name,
-      stableKey: promptItem.dataset.pmIdentifier, // 使用絕對唯一的 ID 作為 Key
-  });
+  // 用 ID 當 Key
+  const createInfo = (name) => ({ originalName: name, stableKey: promptItem.dataset.pmIdentifier });
 
-  // 檢查是否匹配用戶在設定中定義的特定前綴
-  const match = dividerRegex.exec(originalName);
-  if (match) {
-    return createHeaderInfo(originalName);
-  }
-
-  return null;
+  return dividerRegex.test(originalName) ? createInfo(originalName) : null;
 }
 
 /**
- * 核心函式：將提示詞列表整理成可摺疊的群組
- * @param {HTMLElement} listContainer - 提示詞列表的 UL 容器
+ * [Helper] 建立群組的 DOM 結構
+ */
+function createGroupDOM(headerItem, headerInfo, contentItems) {
+    const groupKey = headerInfo.stableKey;
+    
+    // 1. 記錄狀態
+    const childIds = contentItems.map(item => item.dataset.pmIdentifier).filter(Boolean);
+    state.groupHierarchy[groupKey] = childIds;
+    state.groupHeaderStatus[groupKey] = !headerItem.classList.contains('completion_prompt_manager_prompt_disabled');
+
+    // 2. 標記標題 Item
+    headerItem.classList.add(config.classNames.isGroupHeader);
+    const link = headerItem.querySelector(config.selectors.promptLink);
+    if (link) {
+        link.textContent = headerInfo.originalName;
+        // 綁定點擊：只點文字才開關
+        link.onclick = (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            details.open = !details.open;
+        };
+    }
+
+    // 3. 建立容器
+    const details = document.createElement('details');
+    details.className = config.classNames.group;
+    details.open = state.openGroups[groupKey] !== false; // 預設開啟
+    details.dataset.groupKey = groupKey;
+
+    // 4. 建立 Summary (標題列)
+    const summary = document.createElement('summary');
+    summary.onclick = (e) => e.preventDefault(); // 擋掉預設行為，由上面 link 控制
+    summary.appendChild(headerItem);
+    details.appendChild(summary);
+
+    // 5. 建立內容區
+    const contentDiv = document.createElement('div');
+    contentDiv.className = config.classNames.groupContent;
+    contentItems.forEach(item => contentDiv.appendChild(item));
+    details.appendChild(contentDiv);
+
+    // 6. 監聽開關狀態
+    details.ontoggle = () => {
+        state.openGroups[groupKey] = details.open;
+        localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+    };
+
+    return details;
+}
+
+/**
+ * 主函式：重建列表
  */
 export function buildCollapsibleGroups(listContainer) {
-  // 強制從 localStorage 同步最新的開合狀態，確保狀態不會因UI重建而丟失
-  state.openGroups = JSON.parse(
-    localStorage.getItem(config.storageKeys.openStates) || '{}'
-  );
+  // 強制同步最新的開關狀態
+  state.openGroups = JSON.parse(localStorage.getItem(config.storageKeys.openStates) || '{}');
 
   if (!listContainer || state.isProcessing) return;
-
   state.isProcessing = true;
 
   try {
-    // 1. 還原所有項目的原始狀態並備份
-    const allItems = Array.from(
-      listContainer.querySelectorAll(config.selectors.promptListItem)
-    );
-    const currentHeaders = [];
-
-    allItems.forEach((item) => {
+    // 1. 先把所有項目拿出來，還原成乾淨的狀態
+    const allItems = Array.from(listContainer.querySelectorAll(config.selectors.promptListItem));
+    
+    allItems.forEach(item => {
       item.classList.remove(config.classNames.isGroupHeader);
-      const link = item.querySelector(config.selectors.promptLink);
-
-      // 確保 originalName 存在再還原
-      if (link) {
-        if (!item.dataset.originalName) {
-          item.dataset.originalName = link.textContent.trim();
-        } else {
-          link.textContent = item.dataset.originalName;
-        }
-      }
-
-      // 收集當前的標題資訊
-      const headerInfo = getGroupHeaderInfo(item);
-      if (headerInfo) {
-        currentHeaders.push(headerInfo);
+      // 還原名稱
+      if (item.dataset.originalName) {
+        const link = item.querySelector(config.selectors.promptLink);
+        if (link) link.textContent = item.dataset.originalName;
       }
     });
 
-    // 3. 清空容器
+    // 2. 清空並重置狀態
     listContainer.innerHTML = '';
     state.groupHierarchy = {};
     state.groupHeaderStatus = {};
-    state.groupKeyToHeaderId = {};
 
-    // 4. 根據功能是否啟用，決定如何重建列表
+    // 3. 沒啟用就直接塞回去
     if (!state.isEnabled) {
-      allItems.forEach((item) => listContainer.appendChild(item));
-    } else {
-      // --- 標準模式邏輯 ---
-      const buildStandardGroups = () => {
-        let currentGroupContent = null;
-        let currentGroupKey = null; // 追蹤當前的群組 Key
-
-        allItems.forEach((item) => {
-          const headerInfo = getGroupHeaderInfo(item);
-          if (headerInfo) {
-            // 是標題，建立一個新的 <details> 群組
-            const groupKey = headerInfo.stableKey;
-            currentGroupKey = groupKey; // 更新當前的群組 Key
-
-            // 填充狀態物件
-            state.groupHierarchy[groupKey] = [];
-            // 透過檢查 class 來判斷標頭當前的啟用狀態
-            const isEnabled = !item.classList.contains('completion_prompt_manager_prompt_disabled');
-            state.groupHeaderStatus[groupKey] = isEnabled;
-
-            item.classList.add(config.classNames.isGroupHeader);
-            const details = document.createElement('details');
-            details.className = config.classNames.group;
-            details.open = state.openGroups[headerInfo.stableKey] !== false; // 預設展開
-            details.dataset.groupKey = groupKey;
-            const summary = document.createElement('summary');
-            const link = item.querySelector(config.selectors.promptLink);
-            if (link) {
-              link.textContent = headerInfo.originalName;
-              // 讓只有文字可以點擊
-              link.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                details.open = !details.open;
-              });
-            }
-            // 防止點擊 summary 的其他地方導致開合
-            summary.addEventListener('click', (e) => e.preventDefault());
-            summary.appendChild(item);
-            details.appendChild(summary);
-            currentGroupContent = document.createElement('div');
-            currentGroupContent.className = config.classNames.groupContent;
-            details.appendChild(currentGroupContent);
-            details.addEventListener('toggle', () => {
-              // 統一使用 stableKey 儲存狀態
-              state.openGroups[headerInfo.stableKey] = details.open; 
-              localStorage.setItem(
-                config.storageKeys.openStates,
-                JSON.stringify(state.openGroups)
-              );
-            });
-            listContainer.appendChild(details);
-          } else if (currentGroupContent) {
-
-            // 這是子條目
-            const childId = item.dataset.pmIdentifier;
-            // 將子項目 ID 加入當前群組的 hierarchy 中
-            if (currentGroupKey) {
-                state.groupHierarchy[currentGroupKey].push(childId);
-            }
-            
-            // 是普通項目，且前面有群組，就放進去
-            currentGroupContent.appendChild(item);
-          } else {
-            // 是普通項目，但前面沒有群組，直接放在最外層
-            listContainer.appendChild(item);
-          }
-        });
-      };
-
-      // --- 包覆模式邏輯 ---
-      const buildSandwichGroups = () => {
-        let itemsToProcess = [...allItems];
-        const nodesToAdd = [];
-
-        while (itemsToProcess.length > 0) {
-          const currentItem = itemsToProcess.shift();
-          const headerInfo = getGroupHeaderInfo(currentItem);
-
-          if (!headerInfo) {
-            nodesToAdd.push(currentItem);
-            continue;
-          }
-
-          // 这是一個標頭，尋找配對的結束標頭
-          const closingHeaderIndex = itemsToProcess.findIndex((item) => {
-            const otherHeader = getGroupHeaderInfo(item);
-            return (
-              otherHeader && otherHeader.originalName === headerInfo.originalName
-            );
-          });
-
-          if (closingHeaderIndex !== -1) {
-            // 要摺疊的內容包含從開始到結束的所有項目(包含結束標頭)。
-            const contentItems = itemsToProcess.splice(
-              0,
-              closingHeaderIndex + 1
-            );
-
-            const groupKey = headerInfo.stableKey;
-
-            // 1. 填充狀態物件
-            state.groupHierarchy[groupKey] = [];
-            const isEnabled = !currentItem.classList.contains('completion_prompt_manager_prompt_disabled');
-            state.groupHeaderStatus[groupKey] = isEnabled;
-
-            // 2. 將所有子項目的 ID 加入 hierarchy
-            contentItems.forEach(childItem => {
-                const childId = childItem.dataset.pmIdentifier;
-                if (childId) {
-                    state.groupHierarchy[groupKey].push(childId);
-                }
-            });
-
-            currentItem.classList.add(config.classNames.isGroupHeader);
-            const details = document.createElement('details');
-            details.className = config.classNames.group;
-            details.open = state.openGroups[headerInfo.stableKey] !== false;
-            details.dataset.groupKey = groupKey;
-
-            const summary = document.createElement('summary');
-            const link = currentItem.querySelector(config.selectors.promptLink);
-            if (link) {
-              link.textContent = headerInfo.originalName;
-              // 讓只有文字可以點擊
-              link.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                details.open = !details.open;
-              });
-            }
-            // 防止點擊 summary 的其他地方導致開合
-            summary.addEventListener('click', (e) => e.preventDefault());
-
-            summary.appendChild(currentItem);
-            details.appendChild(summary);
-
-            const groupContent = document.createElement('div');
-            groupContent.className = config.classNames.groupContent;
-            contentItems.forEach((contentItem) =>
-              groupContent.appendChild(contentItem)
-            );
-            details.appendChild(groupContent);
-
-            details.addEventListener('toggle', () => {
-              state.openGroups[headerInfo.stableKey] = details.open;
-              localStorage.setItem(
-                config.storageKeys.openStates,
-                JSON.stringify(state.openGroups)
-              );
-            });
-
-            nodesToAdd.push(details);
-          } else {
-            // 找不到配對的結束標頭，當作一般項目處理
-            nodesToAdd.push(currentItem);
-          }
-        }
-        nodesToAdd.forEach((node) => listContainer.appendChild(node));
-      };
-
-      if (state.foldingMode === 'sandwich') {
-        buildSandwichGroups();
-      } else {
-        buildStandardGroups();
-      }
+      allItems.forEach(item => listContainer.appendChild(item));
+      return; 
     }
+
+    // --- 標準模式 (遇到標題就切分) ---
+    const buildStandardGroups = () => {
+      let buffer = [];
+      let currentHeader = null;
+      let currentHeaderInfo = null;
+
+      const flushBuffer = () => {
+        if (currentHeader) {
+            listContainer.appendChild(createGroupDOM(currentHeader, currentHeaderInfo, buffer));
+        } else {
+            buffer.forEach(i => listContainer.appendChild(i)); // 沒標題的孤兒
+        }
+        buffer = [];
+      };
+
+      allItems.forEach(item => {
+        const info = getGroupHeaderInfo(item);
+        if (info) {
+          flushBuffer(); // 把上一組結算掉
+          currentHeader = item;
+          currentHeaderInfo = info;
+        } else {
+          buffer.push(item);
+        }
+      });
+      flushBuffer(); // 結算最後一組
+    };
+
+    // --- 包覆模式 (A...A 為一組) ---
+    const buildSandwichGroups = () => {
+      let remaining = [...allItems];
+
+      while (remaining.length > 0) {
+        const current = remaining.shift();
+        const info = getGroupHeaderInfo(current);
+
+        if (!info) {
+          listContainer.appendChild(current); // 不是標題，直接放
+          continue;
+        }
+
+        // 找配對的結束標題
+        const closerIdx = remaining.findIndex(item => {
+            const otherInfo = getGroupHeaderInfo(item);
+            return otherInfo && otherInfo.originalName === info.originalName;
+        });
+
+        if (closerIdx !== -1) {
+          // 抓出中間這整包 (含結束標題)
+          const groupContent = remaining.splice(0, closerIdx + 1); 
+          listContainer.appendChild(createGroupDOM(current, info, groupContent));
+        } else {
+          listContainer.appendChild(current); // 找不到另一半，當孤兒
+        }
+      }
+    };
+
+    state.foldingMode === 'sandwich' ? buildSandwichGroups() : buildStandardGroups();
+    
+    // 補上禁用樣式
     applyGroupDisabledStyles(listContainer);
-  } catch (error) {
-    console.error('[PF] 分組過程發生錯誤:', error);
+
+  } catch (err) {
+    console.error('[PF] Oops, 分組壞了:', err);
   } finally {
     state.isProcessing = false;
   }
 }
 
 /**
- * 展開或收合所有群組
- * @param {HTMLElement} listContainer
- * @param {boolean} shouldOpen - true 展開，false 收合
+ * 全收合/展開
  */
 export function toggleAllGroups(listContainer, shouldOpen) {
-  const allGroups = listContainer.querySelectorAll(
-    `.${config.classNames.group}`
-  );
-  if (!allGroups.length) return;
-
-  allGroups.forEach((details) => {
-    details.open = shouldOpen;
-    const groupKey = details.dataset.groupKey;
-    if (groupKey) state.openGroups[groupKey] = shouldOpen;
-  });
-
-  localStorage.setItem(
-    config.storageKeys.openStates,
-    JSON.stringify(state.openGroups)
-  );
+  const details = listContainer.querySelectorAll(`.${config.classNames.group}`);
+  details.forEach(el => el.open = shouldOpen);
+  // 狀態就不一個個存了，下次重建時會自動更新
 }
 
 /**
  * 根據群組標頭的啟用狀態，為子項目應用或移除灰度樣式
- * @param {HTMLElement} listContainer 
  */
 function applyGroupDisabledStyles(listContainer) {
-    const allGroups = listContainer.querySelectorAll(`.${config.classNames.group}`);
-    allGroups.forEach(details => {
-        const groupKey = details.dataset.groupKey;
-        if (!groupKey) return;
-
-        const headerIsEnabled = state.groupHeaderStatus[groupKey];
-
-        const contentItems = details.querySelectorAll(`.${config.classNames.groupContent} > li.completion_prompt_manager_prompt`);
+    // 掃描所有群組，依據 Header 狀態對內容加 class
+    listContainer.querySelectorAll(`.${config.classNames.group}`).forEach(group => {
+        const key = group.dataset.groupKey;
+        if (!key) return;
+        
+        const isDisabled = state.groupHeaderStatus[key] === false;
+        const contentItems = group.querySelectorAll(`.${config.classNames.groupContent} > li`);
         
         contentItems.forEach(item => {
-            if (headerIsEnabled === false) {
-                item.classList.add('prompt-controlled-by-disabled-group');
-            } else {
-                item.classList.remove('prompt-controlled-by-disabled-group');
-            }
+            item.classList.toggle('prompt-controlled-by-disabled-group', isDisabled);
         });
     });
 }

@@ -26,36 +26,31 @@ export const config = {
     defaultDividers: ['=', '-']
 };
 
-// --- 狀態管理 ---
+// --- 狀態 ---
 export let state = {
+    // 從 LocalStorage 讀取設定，沒讀到就用預設值
     openGroups: JSON.parse(localStorage.getItem(config.storageKeys.openStates) || '{}'),
     isEnabled: localStorage.getItem(config.storageKeys.featureEnabled) !== 'false',
-    isProcessing: false, // 防止重複執行的標記
-    observers: new WeakMap(), // 儲存每個 listContainer 的 observer
-    customDividers: JSON.parse(localStorage.getItem(config.storageKeys.customDividers) || 'null') || config.defaultDividers,
+    customDividers: JSON.parse(localStorage.getItem(config.storageKeys.customDividers)) || config.defaultDividers,
     foldingMode: localStorage.getItem(config.storageKeys.foldingMode) || 'standard',
-
-    groupHierarchy: {}, // { 'group-key': ['child-id-1', 'child-id-2'] }
-    groupHeaderStatus: {}, // { 'group-key': true/false }
+    
+    // Runtime 狀態
+    isProcessing: false, 
+    observers: new WeakMap(), 
+    groupHierarchy: {},    // key: groupKey, value: [childId...]
+    groupHeaderStatus: {}, // key: groupKey, value: boolean
 };
 
+// 初始化 Regex
 export let dividerRegex = buildDividerRegex();
 
-/**
- * 符號匹配
- * @returns {RegExp}
- */
+// 建立分隔線 Regex (特殊字元自動跳脫)
 export function buildDividerRegex() {
-    const patterns = state.customDividers.map(pattern => {
-        // 完全轉義所有特殊字元，當作普通字串處理
-        return pattern.replace(/[.*+?^${}()|[\\]/g, '\\$&');
-    });
+    const patterns = state.customDividers.map(p => p.replace(/[.*+?^${}()|[\\]/g, '\\$&'));
     return new RegExp(`^(${patterns.join('|')})`, 'i');
 }
 
-/**
- * 儲存自訂設定
- */
+// 存設定並更新 Regex
 export function saveCustomSettings() {
     localStorage.setItem(config.storageKeys.customDividers, JSON.stringify(state.customDividers));
     localStorage.setItem(config.storageKeys.foldingMode, state.foldingMode);
