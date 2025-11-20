@@ -1,68 +1,68 @@
-[English](README.md)
+[中文 (繁體)](README.zh-TW.md)
 
 ---
 
-# SillyTavern 提示詞分組（可摺疊）擴充功能
+# Prompt Folding for SillyTavern
 
-這是一個能讓 SillyTavern 的提示詞管理器（Prompt Manager）更加整潔、高效的擴充插件。透過簡單的「標頭標記」，將雜亂的提示詞清單整理為可摺疊的群組，並支援群組級別的啟用/停用控制。
+An extension that organizes your SillyTavern Prompt Manager into clean, collapsible sections. It allows for efficient navigation and group-level control over your prompts using simple header markers.
 
-## 核心功能
+## Key Features
 
-- **自動分組**：在提示詞名稱前加入標記（如 `==標題` 或 `---設定`），自動將其轉為可摺疊的群組標題。
-- **群組連動控制**：
-  - **摺疊/展開**：點擊標題可收合內容。
-  - **啟用/停用**：**（v2.2+ 新功能）** 當你停用（Disable）群組標題時，該群組內的所有提示詞都會被自動過濾，**不會發送給 AI**。這讓你能在不同場景間快速切換整組設定。
-- **兩種摺疊模式**：支援「標準模式」與「包覆模式」，適應不同的整理習慣。
-- **批次操作**：一鍵「全部展開 / 全部收合」。
-- **高度自訂**：可自訂識別標頭的符號（支援正則表達式邏輯）。
-- **零相依性**：輕量級設計，安裝即用。
+- **Auto-Grouping**: Simply add a marker to the beginning of a prompt name (e.g., `=Main`, `---Utilities`) to turn it into a group header.
+- **Group Control Logic**:
+  - **Fold/Unfold**: Click the header text to toggle visibility.
+  - **Enable/Disable**: **(New in v2.2+)** Disabling a group header prompt will automatically **filter out all prompts inside that group**. They will not be sent to the AI. This allows for quick context switching.
+- **Two Folding Modes**: Supports "Standard Mode" and "Sandwich Mode" to suit your organization style.
+- **Batch Actions**: Expand All / Collapse All with a single click.
+- **Customizable**: Define your own header markers via settings.
+- **Lightweight**: Dependency-free and integrates seamlessly with the existing UI.
 
-## 摺疊模式說明
+## Folding Modes
 
-本插件支援兩種模式，可在設定面板中即時切換：
+You can switch between modes instantly in the settings panel:
 
-### 1. 標準模式 (預設)
-最直覺的模式。當程式找到一個標頭時，會將其後方所有的提示詞納入該群組，直到遇到下一個標頭為止。
-* 適合：依功能分類的長清單。
+### 1. Standard Mode (Default)
+When a header is found, it groups all subsequent items under it until the next header is encountered.
+* *Best for:* Categorizing long lists of functional prompts.
 
-### 2. 包覆模式 (Sandwich Mode)
-需要一對完全相同的標頭（例如開始與結束標記）。程式會將這兩個標頭之間的所有內容摺疊起來。
-* 適合：像是「第一章」、「特定場景」這種有明確範圍的區塊。
-* **範例：**
+### 2. Sandwich Mode
+Requires a pair of identical headers. It groups the opening header, the closing header, and all items in between into a single section.
+* *Best for:* deeply nested or specific scenario blocks.
+* **Example:**
   ```text
-  ==== 戰鬥模組 ====  <-- 標題 (Start)
-  攻擊邏輯 A
-  防禦邏輯 B
-  ==== 戰鬥模組 ====  <-- 標題 (End)
+  ==== Combat Logic ====  <-- Header (Start)
+  Attack Prompt
+  Defense Prompt
+  ==== Combat Logic ====  <-- Header (End)
   ```
 
-## 使用教學
+## Usage
 
-1.  **建立群組**：
+1.  **Create a Group**:
 
-      - 在 Prompt Manager 中新增一個提示詞。
-      - 將其命名為以標記符號開頭（預設為 `=` 或 `-`），例如 `= 主要設定`。
-      - 將其拖曳到你想要分組的提示詞上方。
+      - Create a new prompt in the Prompt Manager.
+      - Name it starting with a divider symbol (default is `=` or `-`), e.g., `= Character Settings`.
+      - Drag it above the prompts you want to group.
 
-2.  **管理群組**：
+2.  **Control Groups**:
 
-      - **點擊文字**：展開或收合群組。
-      - **點擊開關（原生的 Enable/Disable）**：若關閉標題的開關，群組內的提示詞會呈現灰色半透明狀，代表它們暫時失效（不會被發送）。
+      - **Click Name**: Toggle expand/collapse.
+      - **Toggle Switch**: Disabling the header's switch will visually dim the group content and prevent those prompts from being sent to the LLM.
 
-3.  **工具列按鈕**：
+3.  **Toolbar Buttons**:
 
-      - `⬇️` / `⬆️`：全部展開或收合。
-      - `🔴` / `🟢`：暫時停用或啟用此擴充功能（不影響提示詞本身，僅影響分組顯示）。
-      - `⚙️`：開啟設定面板，自訂標記符號或查看更新日誌。
+      - `⬇️` / `⬆️`: Expand or Collapse all groups.
+      - `🔴` / `🟢`: Toggle the extension functionality on/off (does not delete prompts, just removes grouping).
+      - `⚙️`: Open settings to customize dividers or view the changelog.
 
-## 安裝方式
+## Installation
 
-1.  複製儲存庫連結：`https://github.com/iiimabbie/ST-PromptFolding`
-2.  在 SillyTavern 介面中開啟【Extensions】分頁。
-3.  點擊右上角【Install Extension】。
-4.  貼上連結並安裝。
-5.  安裝後請確認 **Prompt Folding** 已啟用。
+1.  Copy the repository URL: `https://github.com/iiimabbie/ST-PromptFolding`
+2.  Open the **Extensions** tab in SillyTavern.
+3.  Click **Install Extension** (top-right).
+4.  Paste the URL and install.
+5.  Ensure **Prompt Folding** is enabled in the list.
 
-## 授權
+## License
 
-本專案依 [LICENSE](LICENSE) 條款授權。
+This project is licensed under the terms of the [LICENSE](LICENSE) file.
