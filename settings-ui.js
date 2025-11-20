@@ -1,5 +1,6 @@
 import { state, saveCustomSettings, config } from './state.js';
 import { buildCollapsibleGroups } from './prompt-folding.js';
+import { callGenericPopup, POPUP_TYPE } from '../../../popup.js';
 
 /**
  * 建立設定面板並插入到提示詞管理器中
@@ -115,19 +116,33 @@ function initializeSettingsPanel() {
         toastr.success('設定已套用並重新分組');
     });
 
-    resetButton.addEventListener('click', () => {
-        // 顯示確認對話框
-        const confirmReset = confirm(
-            '確定要重設所有設定嗎？\n\n' +
-            '這將會：\n' +
-            '• 恢復預設分組標示符號 (=, -)\n' +
-            '• 切換回標準模式\n' +
-            '• 立即重新分組\n\n' +
-            '此操作無法復原！'
+    resetButton.addEventListener('click', async () => {
+        // 準備 HTML 內容
+        const popupContent = `
+            <div style="font-size: 1.1em; margin-bottom: 10px;">確定要重設所有設定嗎？</div>
+            <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;">
+                這將會執行以下操作：
+                <ul style="margin: 5px 0 5px 20px; list-style-type: disc;">
+                    <li>恢復預設分組標示符號 (=, -)</li>
+                    <li>切換回標準模式</li>
+                    <li>立即重新分組</li>
+                </ul>
+                <div style="color: #ff6b6b; margin-top: 10px; font-weight: bold;">⚠ 此操作無法復原！</div>
+            </div>
+        `;
+
+        // 直接呼叫引入的函式，並使用引入的 Enum
+        // callGenericPopup 參數順序: content, type, inputValue, options
+        const result = await callGenericPopup(
+            popupContent, 
+            POPUP_TYPE.CONFIRM, 
+            '', // inputValue (Confirm 類型不需要，但保持參數位置)
+            { okButton: '確定重設', cancelButton: '取消' } // (選用) 自訂按鈕文字讓介面更清楚
         );
 
-        if (!confirmReset) {
-            return; // 使用者取消，不執行重設
+        // 如果使用者按取消 (result 為 false 或 null)
+        if (!result) {
+            return; 
         }
 
         // 執行重設
