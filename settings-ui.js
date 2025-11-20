@@ -170,4 +170,24 @@ function initializeSettingsPanel() {
             }
         })
         .catch(err => console.error('[PF] 無法載入 manifest.json 獲取版本號:', err));
+
+    // 動態載入更新日誌
+    fetch('/scripts/extensions/third-party/ST-PromptFolding/changelog.json')
+        .then(response => response.json())
+        .then(logs => {
+            const changelogIcon = document.getElementById('prompt-folding-changelog-icon');
+            if (changelogIcon && Array.isArray(logs)) {
+                // 格式化日誌內容
+                const logText = logs.map(log => 
+                    `[${log.date}] v${log.version}\n${log.changes.map(c => `• ${c}`).join('\n')}`
+                ).join('\n\n');
+                
+                changelogIcon.title = `更新日誌\n\n${logText}`;
+            }
+        })
+        .catch(err => {
+            console.error('[PF] 無法載入 changelog.json:', err);
+            const changelogIcon = document.getElementById('prompt-folding-changelog-icon');
+            if (changelogIcon) changelogIcon.title = "無法載入更新日誌";
+        });
 }

@@ -1,54 +1,68 @@
-[English](README.md)
+[中文 (繁體)](README.zh-TW.md)
 
 ---
 
-# SillyTavern 提示詞分組（可摺疊）擴充功能
+# Prompt Folding for SillyTavern
 
-將提示詞管理器中的項目，透過簡單的「標頭標記」分組為可摺疊區塊，讓清單更整齊、瀏覽更高效。
+An extension that organizes your SillyTavern Prompt Manager into clean, collapsible sections. It allows for efficient navigation and group-level control over your prompts using simple header markers.
 
-## 功能
+## Key Features
 
-- 在提示詞名稱開頭加入標記（例如：`=標題`、`--- 工具`）即可建立群組。
-- 標記所在的項目會成為可摺疊的群組標題。
-- 支援兩種摺疊模式（標準模式、包覆模式）。
-- 一鍵「全部展開 / 全部收合」。
-- 可即時開關「分組」功能。
-- 可自訂標頭標記與是否區分大小寫（設定會保存在 localStorage）。
-- 輕量、零相依；樣式由 `collapsible-prompt.css` 提供。
+- **Auto-Grouping**: Simply add a marker to the beginning of a prompt name (e.g., `=Main`, `---Utilities`) to turn it into a group header.
+- **Group Control Logic**:
+  - **Fold/Unfold**: Click the header text to toggle visibility.
+  - **Enable/Disable**: **(New in v2.2+)** Disabling a group header prompt will automatically **filter out all prompts inside that group**. They will not be sent to the AI. This allows for quick context switching.
+- **Two Folding Modes**: Supports "Standard Mode" and "Sandwich Mode" to suit your organization style.
+- **Batch Actions**: Expand All / Collapse All with a single click.
+- **Customizable**: Define your own header markers via settings.
+- **Lightweight**: Dependency-free and integrates seamlessly with the existing UI.
 
-## 摺疊模式
+## Folding Modes
 
-本插件支援兩種不同的摺疊模式，可以在設定面板中選擇。
+You can switch between modes instantly in the settings panel:
 
-- **標準模式 (預設):** 當找到一個標頭時，它會將其後的所有項目歸為一組，直到遇到下一個標頭為止。
+### 1. Standard Mode (Default)
+When a header is found, it groups all subsequent items under it until the next header is encountered.
+* *Best for:* Categorizing long lists of functional prompts.
 
-- **包覆模式:** 此模式需要一對完全相同的標頭。它會將開始標頭、結束標頭以及它們之間的所有項目組成一個可摺疊的群組。
-  - *範例:*
-    ```
-    ==== 第一章 開始 ====
-    提示詞A
-    提示詞B
-    ==== 第一章 開始 ====
-    ```
-    以上內容將會變成一個名為「==== 第一章 開始 ====」的可摺疊群組。
+### 2. Sandwich Mode
+Requires a pair of identical headers. It groups the opening header, the closing header, and all items in between into a single section.
+* *Best for:* deeply nested or specific scenario blocks.
+* **Example:**
+  ```text
+  ==== Combat Logic ====  <-- Header (Start)
+  Attack Prompt
+  Defense Prompt
+  ==== Combat Logic ====  <-- Header (End)
+  ```
 
-## 使用方式
+## Usage
 
-- 建立一個以標頭標記開頭的提示詞名稱。
-- 根據選擇的摺疊模式，分組的行為會有所不同。
-- 在提示詞管理器的標題列，可點擊按鈕來全部展開、全部收合、開啟設定或切換是否啟用分組。
-- 打開設定面板可自訂標頭標記、摺疊模式及是否區分大小寫。
+1.  **Create a Group**:
 
-## 安裝
+      - Create a new prompt in the Prompt Manager.
+      - Name it starting with a divider symbol (default is `=` or `-`), e.g., `= Character Settings`.
+      - Drag it above the prompts you want to group.
 
-1. 複製儲存庫連結：`https://github.com/iiimabbie/ST-PromptFolding`
-2. 在 SillyTavern 介面中開啟【Extensions】分頁。
-3. 點擊右上角【Install Extension】。
-4. 在跳出的視窗中，將儲存庫連結貼到第一個輸入框。
-5. 點擊 **Install for all users** 或 **Install just for me**。
-6. 安裝完成後，前往【Manage Extensions】。
-7. 找到 **Prompt Folding** 並確保已啟用。
+2.  **Control Groups**:
 
-## 授權
+      - **Click Name**: Toggle expand/collapse.
+      - **Toggle Switch**: Disabling the header's switch will visually dim the group content and prevent those prompts from being sent to the LLM.
 
-本專案依 [LICENSE](LICENSE) 條款授權。
+3.  **Toolbar Buttons**:
+
+      - `⬇️` / `⬆️`: Expand or Collapse all groups.
+      - `🔴` / `🟢`: Toggle the extension functionality on/off (does not delete prompts, just removes grouping).
+      - `⚙️`: Open settings to customize dividers or view the changelog.
+
+## Installation
+
+1.  Copy the repository URL: `https://github.com/iiimabbie/ST-PromptFolding`
+2.  Open the **Extensions** tab in SillyTavern.
+3.  Click **Install Extension** (top-right).
+4.  Paste the URL and install.
+5.  Ensure **Prompt Folding** is enabled in the list.
+
+## License
+
+This project is licensed under the terms of the [LICENSE](LICENSE) file.
