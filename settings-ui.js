@@ -116,6 +116,21 @@ function initializeSettingsPanel() {
     });
 
     resetButton.addEventListener('click', () => {
+        // 顯示確認對話框
+        const confirmReset = confirm(
+            '確定要重設所有設定嗎？\n\n' +
+            '這將會：\n' +
+            '• 恢復預設分組標示符號 (=, -)\n' +
+            '• 切換回標準模式\n' +
+            '• 立即重新分組\n\n' +
+            '此操作無法復原！'
+        );
+
+        if (!confirmReset) {
+            return; // 使用者取消，不執行重設
+        }
+
+        // 執行重設
         state.customDividers = [...config.defaultDividers];
         state.foldingMode = 'standard';
         saveCustomSettings();
