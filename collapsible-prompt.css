@@ -302,17 +302,17 @@ li.completion_prompt_manager_prompt.prompt-controlled-by-disabled-group > span:n
 ------------------------------------------------------------ */
 .mingyu-collapse-controls {
     display: flex;
-    gap: 4px; /* 間距稍微縮小 */
+    gap: 5px;            /* 按鈕之間的間距 */
     align-items: center;
-    margin-left: auto;
-    flex-wrap: nowrap; /* 強制不換行 */
-    flex-shrink: 0;    /* 防止被擠壓 */
+    width: 100%;         /* 佔滿整行 */
+    box-sizing: border-box;
 }
 
 /* 20. 搜尋框樣式
 ------------------------------------------------------------ */
 input.mingyu-prompt-search {
-    width: 100px;           /* 安全的固定寬度 */
+    flex: 1;
+    min-width: 60px;
     padding: 4px 8px;
     font-size: 14px;
     height: 30px;
@@ -320,7 +320,7 @@ input.mingyu-prompt-search {
     border: 1px solid rgba(255,255,255,0.2);
     background-color: rgba(0,0,0,0.3);
     color: var(--SmartThemeBodyColor, #fff);
-    margin-right: 2px;
+    margin-right: 5px;
 }
 
 /* 21. 搜尋框 focus 效果 
@@ -331,7 +331,7 @@ input.mingyu-prompt-search:focus {
     outline: none;
 }
 
-/* 22. 確保條目垂直對齊
+/* 22. 微調按鈕樣式
 ------------------------------------------------------------ */
 .mingyu-settings-toggle,
 .mingyu-expand-all,

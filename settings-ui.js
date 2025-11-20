@@ -11,12 +11,15 @@ export async function createSettingsPanel(pmContainer) {
         const html = await res.text();
 
         // 找個好位置插入
-        const header = pmContainer.querySelector('.completion_prompt_manager_header');
-        const target = header ? header.nextElementSibling : pmContainer.firstElementChild;
-        
-        // 使用 insertAdjacentHTML
-        (header || pmContainer).insertAdjacentHTML(header ? 'afterend' : 'beforebegin', html);
-        
+        const list = pmContainer.querySelector('#completion_prompt_manager_list');
+
+        if (list) {
+            list.insertAdjacentHTML('beforebegin', html);
+        } else {
+            // 備用方案：插在容器最後面（理論上不應該發生）
+            pmContainer.insertAdjacentHTML('beforeend', html);
+        }
+
         initLogic();
     } catch (err) {
         console.error('[PF] Load settings UI failed:', err);
@@ -28,10 +31,11 @@ function initLogic() {
         textarea: document.getElementById('prompt-folding-dividers'),
         applyBtn: document.getElementById('prompt-folding-apply'),
         resetBtn: document.getElementById('prompt-folding-reset'),
-        radios: document.getElementsByName('folding-mode'),
         panel: document.getElementById('prompt-folding-settings'),
         toggleBtn: document.querySelector('.mingyu-settings-toggle')
     };
+
+    if (!els.textarea) return; // 防呆
 
     // 1. 填入當前設定
     els.textarea.value = state.customDividers.join('\n');

@@ -61,22 +61,29 @@ function createBtn(icon, title, onClick, className = '') {
     return btn;
 }
 
+/**
+ * 建立並掛載功能按鈕與搜尋框
+ */
 function setupToggleButton(listContainer) {
-    const header = document.querySelector('.completion_prompt_manager_header');
-    if (!header) return;
-    
-    header.querySelector('.mingyu-collapse-controls')?.remove();
+    // 1. 找到外層容器與 Header
+    const manager = listContainer.closest('#completion_prompt_manager');
+    const header = manager?.querySelector('.completion_prompt_manager_header');
+    if (!manager || !header) return;
 
+    // 2. 移除舊的控制列
+    manager.querySelector('.mingyu-collapse-controls')?.remove();
+
+    // 3. 建立新的工具列容器
     const container = document.createElement('div');
     container.className = 'mingyu-collapse-controls';
 
-    // 1. 搜尋框
+    // --- 搜尋框 ---
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
-    searchInput.placeholder = '搜尋提示詞...';
+    searchInput.placeholder = '搜尋...'; // 簡短一點
     searchInput.className = 'mingyu-prompt-search text_pole'; // 使用 ST 原生樣式 text_pole
     searchInput.value = state.searchQuery;
-
+    
     // 監聽輸入：更新 state -> 重繪
     searchInput.addEventListener('input', (e) => {
         state.searchQuery = e.target.value.toLowerCase().trim();
@@ -106,7 +113,7 @@ function setupToggleButton(listContainer) {
     updateToggleState();
     container.append(toggleBtn);
 
-    // 設定按鈕
+    // --- 設定按鈕 ---
     const settingsBtn = createBtn('⚙️', '分組設定', () => {
         const panel = document.getElementById('prompt-folding-settings');
         if (panel) {
@@ -117,9 +124,8 @@ function setupToggleButton(listContainer) {
     }, 'mingyu-settings-toggle');
     container.append(settingsBtn);
 
-    // 插入 Header
-    const target = header.firstElementChild?.nextSibling || header.firstChild;
-    header.insertBefore(container, target);
+    // 4. 插入到 Header 的「後面」，成為獨立的一行
+    header.insertAdjacentElement('afterend', container);
 }
 
 // --- 3. Hook 核心邏輯 (效能優化版) ---
