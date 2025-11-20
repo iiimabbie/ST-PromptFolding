@@ -133,7 +133,8 @@ export function buildCollapsibleGroups(listContainer) {
             currentGroupContent.className = config.classNames.groupContent;
             details.appendChild(currentGroupContent);
             details.addEventListener('toggle', () => {
-              state.openGroups[headerInfo.originalName] = details.open;
+              // 統一使用 stableKey 儲存狀態
+              state.openGroups[headerInfo.stableKey] = details.open; 
               localStorage.setItem(
                 config.storageKeys.openStates,
                 JSON.stringify(state.openGroups)
@@ -205,7 +206,7 @@ export function buildCollapsibleGroups(listContainer) {
             currentItem.classList.add(config.classNames.isGroupHeader);
             const details = document.createElement('details');
             details.className = config.classNames.group;
-            details.open = state.openGroups[headerInfo.originalName] !== false;
+            details.open = state.openGroups[headerInfo.stableKey] !== false;
             details.dataset.groupKey = groupKey;
 
             const summary = document.createElement('summary');
@@ -233,7 +234,7 @@ export function buildCollapsibleGroups(listContainer) {
             details.appendChild(groupContent);
 
             details.addEventListener('toggle', () => {
-              state.openGroups[headerInfo.originalName] = details.open;
+              state.openGroups[headerInfo.stableKey] = details.open;
               localStorage.setItem(
                 config.storageKeys.openStates,
                 JSON.stringify(state.openGroups)
