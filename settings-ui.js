@@ -43,11 +43,10 @@ export async function createSettingsPanel(listContainer) {
  */
 function initializeSettingsPanel() {
     const textArea = document.getElementById('prompt-folding-dividers');
-    const caseCheckbox = document.getElementById('prompt-folding-case-sensitive');
     const applyButton = document.getElementById('prompt-folding-apply');
     const resetButton = document.getElementById('prompt-folding-reset');
 
-    if (!textArea || !caseCheckbox || !applyButton || !resetButton) {
+    if (!textArea || !applyButton || !resetButton) {
         console.warn('[PF] 設定面板元素未找到');
         return;
     }
@@ -57,7 +56,6 @@ function initializeSettingsPanel() {
     }
 
     textArea.value = state.customDividers.join('\n');
-    caseCheckbox.checked = state.caseSensitive;
 
     const standardRadio = document.getElementById('prompt-folding-mode-standard');
     const sandwichRadio = document.getElementById('prompt-folding-mode-sandwich');
@@ -104,7 +102,6 @@ function initializeSettingsPanel() {
         }
 
         state.customDividers = newDividers;
-        state.caseSensitive = caseCheckbox.checked;
 
         const selectedMode = document.querySelector('input[name="folding-mode"]:checked').value;
         state.foldingMode = selectedMode || 'standard';
@@ -120,12 +117,10 @@ function initializeSettingsPanel() {
 
     resetButton.addEventListener('click', () => {
         state.customDividers = [...config.defaultDividers];
-        state.caseSensitive = false;
         state.foldingMode = 'standard';
         saveCustomSettings();
 
         textArea.value = state.customDividers.join('\n');
-        caseCheckbox.checked = false;
         if (standardRadio) standardRadio.checked = true;
 
         const listContainer = document.querySelector(config.selectors.promptList);

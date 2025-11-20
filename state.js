@@ -14,7 +14,6 @@ export const config = {
         openStates: 'mingyu_collapsible_openStates',
         featureEnabled: 'mingyu_collapsible_featureEnabled',
         customDividers: 'mingyu_collapsible_customDividers',
-        caseSensitive: 'mingyu_collapsible_caseSensitive',
         foldingMode: 'mingyu_collapsible_foldingMode',
     },
     // CSS class 名稱
@@ -34,7 +33,6 @@ export let state = {
     isProcessing: false, // 防止重複執行的標記
     observers: new WeakMap(), // 儲存每個 listContainer 的 observer
     customDividers: JSON.parse(localStorage.getItem(config.storageKeys.customDividers) || 'null') || config.defaultDividers,
-    caseSensitive: localStorage.getItem(config.storageKeys.caseSensitive) === 'true',
     foldingMode: localStorage.getItem(config.storageKeys.foldingMode) || 'standard',
 
     groupHierarchy: {}, // { 'group-key': ['child-id-1', 'child-id-2'] }
@@ -52,8 +50,7 @@ export function buildDividerRegex() {
         // 完全轉義所有特殊字元，當作普通字串處理
         return pattern.replace(/[.*+?^${}()|[\\]/g, '\\$&');
     });
-    const flags = state.caseSensitive ? '' : 'i';
-    return new RegExp(`^(${patterns.join('|')})`, flags);
+    return new RegExp(`^(${patterns.join('|')})`, 'i');
 }
 
 /**
@@ -61,7 +58,6 @@ export function buildDividerRegex() {
  */
 export function saveCustomSettings() {
     localStorage.setItem(config.storageKeys.customDividers, JSON.stringify(state.customDividers));
-    localStorage.setItem(config.storageKeys.caseSensitive, state.caseSensitive);
     localStorage.setItem(config.storageKeys.foldingMode, state.foldingMode);
     dividerRegex = buildDividerRegex();
 }
