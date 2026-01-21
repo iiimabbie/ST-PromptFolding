@@ -1,8 +1,7 @@
-import { config, state } from './state.js';
+import { config, state, log, getStorageKey } from './state.js';
 import { buildCollapsibleGroups, toggleAllGroups } from './prompt-folding.js';
 import { createSettingsPanel } from './settings-ui.js';
 
-let promptManagerInstance = null;
 let isHooked = false;
 
 // --- 1. 觀察者邏輯 ---
@@ -14,22 +13,35 @@ function createListContentObserver(listContainer) {
     const observer = new MutationObserver((mutations) => {
         if (state.isProcessing) return;
 
-        // 檢查是否有相關節點變動
         const isPromptNode = (n) => n.nodeType === 1 && (n.matches(config.selectors.promptListItem) || n.querySelector(config.selectors.promptListItem));
-        
-        const shouldRebuild = mutations.some(m => 
-            m.type === 'childList' && (Array.from(m.addedNodes).some(isPromptNode) || Array.from(m.removedNodes).some(isPromptNode))
-        );
+
+        const shouldRebuild = mutations.some(m => {
+            // childList: 新增/刪除節點
+            if (m.type === 'childList' && (Array.from(m.addedNodes).some(isPromptNode) || Array.from(m.removedNodes).some(isPromptNode))) {
+                log('Detected childList change, rebuilding');
+                return true;
+            }
+            // characterData: 文字內容變更（條目名稱改了）
+            // 注意：不需要刪除緩存，buildCollapsibleGroups 會自動更新
+            if (m.type === 'characterData') {
+                const target = m.target.parentElement;
+                if (target && target.matches(config.selectors.promptLink)) {
+                    log('Prompt name changed, rebuilding');
+                    return true;
+                }
+            }
+            return false;
+        });
 
         if (shouldRebuild) {
             observer.disconnect();
             buildCollapsibleGroups(listContainer);
             // 稍微延遲後重新掛載，避免連續觸發
-            setTimeout(() => observer.observe(listContainer, { childList: true, subtree: true }), 100);
+            setTimeout(() => observer.observe(listContainer, { childList: true, subtree: true, characterData: true }), 100);
         }
     });
 
-    observer.observe(listContainer, { childList: true, subtree: true });
+    observer.observe(listContainer, { childList: true, subtree: true, characterData: true });
     state.observers.set(listContainer, observer);
 }
 
@@ -44,10 +56,11 @@ function setupDragHandlers(listContainer) {
     listContainer.addEventListener('dragend', () => {
         setTimeout(() => {
             buildCollapsibleGroups(listContainer);
-            state.observers.get(listContainer)?.observe(listContainer, { childList: true, subtree: true });
+            state.observers.get(listContainer)?.observe(listContainer, { childList: true, subtree: true, characterData: true });
         }, 150);
     });
 }
+
 
 // --- 2. UI 按鈕邏輯 ---
 
@@ -55,7 +68,15 @@ function setupDragHandlers(listContainer) {
 function createBtn(icon, title, onClick, className = '') {
     const btn = document.createElement('button');
     btn.className = `menu_button ${className}`;
-    btn.textContent = icon;
+
+    if (icon.startsWith('fa-')) {
+        const i = document.createElement('i');
+        i.className = `fa-solid ${icon}`;
+        btn.appendChild(i);
+    } else {
+        btn.textContent = icon;
+    }
+
     btn.title = title;
     btn.onclick = onClick;
     return btn;
@@ -64,7 +85,7 @@ function createBtn(icon, title, onClick, className = '') {
 function setupToggleButton(listContainer) {
     const header = document.querySelector('.completion_prompt_manager_header');
     if (!header) return;
-    
+
     header.querySelector('.mingyu-collapse-controls')?.remove();
 
     const container = document.createElement('div');
@@ -72,18 +93,25 @@ function setupToggleButton(listContainer) {
 
     // 功能按鈕
     container.append(
-        createBtn('⬇️', '展開所有', () => toggleAllGroups(listContainer, true), 'mingyu-expand-all'),
-        createBtn('⬆️', '收合所有', () => toggleAllGroups(listContainer, false), 'mingyu-collapse-all')
+        createBtn('fa-expand', '展開所有', () => {
+            log('Expand all button clicked');
+            toggleAllGroups(listContainer, true);
+        }, 'mingyu-expand-all'),
+        createBtn('fa-compress', '收合所有', () => {
+            log('Collapse all button clicked');
+            toggleAllGroups(listContainer, false);
+        }, 'mingyu-collapse-all')
     );
 
     // 開關按鈕
     const toggleBtn = createBtn('', '', () => {
         state.isEnabled = !state.isEnabled;
-        localStorage.setItem(config.storageKeys.featureEnabled, state.isEnabled);
+        localStorage.setItem(getStorageKey(config.storageKeys.featureEnabled), state.isEnabled);
+        log('Feature toggled:', state.isEnabled);
         updateToggleState();
         buildCollapsibleGroups(listContainer);
     });
-    
+
     const updateToggleState = () => {
         toggleBtn.textContent = state.isEnabled ? '🟢' : '🔴';
         toggleBtn.title = state.isEnabled ? '點擊停用' : '點擊啟用';
@@ -93,6 +121,7 @@ function setupToggleButton(listContainer) {
 
     // 設定按鈕
     const settingsBtn = createBtn('⚙️', '分組設定', () => {
+        log('Settings button clicked');
         const panel = document.getElementById('prompt-folding-settings');
         if (panel) {
             const isHidden = panel.style.display === 'none';
@@ -111,31 +140,30 @@ function setupToggleButton(listContainer) {
 
 function hookPromptManager(pm) {
     const originalGet = pm.getPromptCollection.bind(pm);
-    
+
     pm.getPromptCollection = function(type) {
         const collection = originalGet(type);
         if (!state.isEnabled) return collection;
 
-        // 1. 更新 Header 狀態 (這步很快)
+        // 更新 Header 狀態並過濾被禁用的子項
         updateGroupHeaderStatus(pm);
 
-        // 2. 建立「被禁用 ID」的 Set (Lookup O(1))
+        // 建立被禁用 ID 的 Set (O(1) lookup)
         const disabledIds = new Set();
         for (const [groupKey, childIds] of Object.entries(state.groupHierarchy)) {
-            // 如果這個群組被關閉 (false)，把它的孩子都加入黑名單
             if (state.groupHeaderStatus[groupKey] === false) {
                 childIds.forEach(id => disabledIds.add(id));
             }
         }
 
-        // 3. 過濾
+        // 過濾
         if (disabledIds.size > 0) {
             collection.collection = collection.collection.filter(p => !disabledIds.has(p.identifier));
         }
 
         return collection;
     };
-    console.log('[PF] Hook installed.');
+    log('Hook installed.');
 }
 
 function updateGroupHeaderStatus(pm) {
@@ -156,24 +184,28 @@ function initialize(listContainer) {
     const pmWrapper = listContainer.closest('#completion_prompt_manager');
     if (!pmWrapper) return;
 
-    createSettingsPanel(pmWrapper);
+    log('Initializing Prompt Folding...');
+
+    createSettingsPanel(pmWrapper, listContainer);
     setupToggleButton(listContainer);
     buildCollapsibleGroups(listContainer);
     createListContentObserver(listContainer);
     setupDragHandlers(listContainer);
-    
+
+    log('Initialization completed');
+
     // 嘗試 Hook
     if (!isHooked) {
+        log('Attempting to install hook...');
         import('../../../../scripts/openai.js').then(m => {
             const check = setInterval(() => {
                 if (m.promptManager?.serviceSettings) {
                     clearInterval(check);
-                    promptManagerInstance = m.promptManager;
                     hookPromptManager(m.promptManager);
                     isHooked = true;
                 }
             }, 100);
-            setTimeout(() => clearInterval(check), 5000); // 5秒超時
+            setTimeout(() => clearInterval(check), 5000);
         });
     }
 }

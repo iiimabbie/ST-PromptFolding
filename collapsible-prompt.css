@@ -1,5 +1,5 @@
 /*
- * (c) 2025 mingyu
+ * (c) 2025 iiimabbie
  * 可摺疊提示詞群組的樣式
  */
 
@@ -67,7 +67,11 @@
 /* 5. 標題內的星號圖示隱藏
 ------------------------------------------------------------ */
 .mingyu-prompt-group li.is-group-header .fa-asterisk {
-    display: none !important; /* 強制隱藏作為標題的提示詞的星號 */
+    visibility: hidden !important; /* 隱藏但保留在 DOM 中，不影響其他插件的選擇器 */
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* 6. 群組內容區域 (<div>)
@@ -296,4 +300,18 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 li.completion_prompt_manager_prompt.prompt-controlled-by-disabled-group > span:not(.prompt_manager_prompt_tokens) {
     filter: grayscale(80%);
     opacity: 0.6;
+}
+
+/* 19. 手動選擇模式的勾選框樣式
+------------------------------------------------------------ */
+/* 當有勾選框時，調整 grid 佈局為 4 欄 */
+li.completion_prompt_manager_prompt:has(.mingyu-header-checkbox) {
+    grid-template-columns: 25px 4fr 80px 45px !important;
+}
+
+.mingyu-header-checkbox {
+    cursor: pointer;
+    margin: 0;
+    justify-self: center; /* 在自己的欄位裡置中 */
+    align-self: center;
 }

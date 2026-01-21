@@ -1,4 +1,32 @@
-import { config, state, dividerRegex } from './state.js';
+import { config, state, dividerRegex, log, getStorageKey } from './state.js';
+
+/**
+ * 從 <a> 標籤中提取純文字名稱（不含 icon）
+ */
+function extractTextName(link) {
+    // 找純文字節點（nodeType === 3），不包含 <span> 等元素
+    const textNodes = Array.from(link.childNodes).filter(n => n.nodeType === 3);
+    return textNodes.map(n => n.textContent).join('').trim();
+}
+
+/**
+ * 設定 <a> 標籤的純文字內容（保留 icon）
+ */
+function setTextName(link, newText) {
+    // 找到純文字節點並更新
+    const textNodes = Array.from(link.childNodes).filter(n => n.nodeType === 3);
+    if (textNodes.length > 0) {
+        // 如果有多個文字節點，只改第一個（通常只有一個）
+        textNodes[0].textContent = newText;
+        // 清除其他文字節點
+        for (let i = 1; i < textNodes.length; i++) {
+            textNodes[i].textContent = '';
+        }
+    } else {
+        // 沒有文字節點，新增一個
+        link.appendChild(document.createTextNode(newText));
+    }
+}
 
 /**
  * 判斷 LI 是不是標題
@@ -8,13 +36,30 @@ function getGroupHeaderInfo(promptItem) {
   const link = promptItem.querySelector(config.selectors.promptLink);
   if (!link) return null;
 
-  const originalName = link.textContent.trim();
-  // 記錄原始名稱，避免重複處理時名字壞掉
-  if (!promptItem.dataset.originalName) promptItem.dataset.originalName = originalName;
+  const itemId = promptItem.dataset.pmIdentifier;
 
-  // 用 ID 當 Key
-  const createInfo = (name) => ({ originalName: name, stableKey: promptItem.dataset.pmIdentifier });
+  // 每次都重新讀取名稱（確保顯示最新的名稱）
+  const currentName = extractTextName(link);
 
+  // 檢查緩存中的名稱是否已過時
+  const cachedName = state.originalNames.get(itemId);
+  if (cachedName !== currentName) {
+    log('Name changed for', itemId, ':', cachedName, '->', currentName);
+    state.originalNames.set(itemId, currentName);
+    // 只存 originalNames，不要覆蓋其他設定
+    localStorage.setItem(getStorageKey(config.storageKeys.originalNames), JSON.stringify([...state.originalNames]));
+  }
+
+  const originalName = currentName;
+
+  const createInfo = (name) => ({ originalName: name, stableKey: itemId });
+
+  // 手動模式優先
+  if (state.foldingMode === 'manual') {
+    return state.manualHeaders.has(itemId) ? createInfo(originalName) : null;
+  }
+
+  // 原有的符號判斷（標準/包覆模式）
   return dividerRegex.test(originalName) ? createInfo(originalName) : null;
 }
 
@@ -23,7 +68,7 @@ function getGroupHeaderInfo(promptItem) {
  */
 function createGroupDOM(headerItem, headerInfo, contentItems) {
     const groupKey = headerInfo.stableKey;
-    
+
     // 1. 記錄狀態
     const childIds = contentItems.map(item => item.dataset.pmIdentifier).filter(Boolean);
     state.groupHierarchy[groupKey] = childIds;
@@ -31,26 +76,37 @@ function createGroupDOM(headerItem, headerInfo, contentItems) {
 
     // 2. 標記標題 Item
     headerItem.classList.add(config.classNames.isGroupHeader);
-    const link = headerItem.querySelector(config.selectors.promptLink);
-    if (link) {
-        link.textContent = headerInfo.originalName;
-        // 綁定點擊：只點文字才開關
-        link.onclick = (e) => {
-            e.preventDefault(); 
-            e.stopPropagation();
-            details.open = !details.open;
-        };
-    }
 
-    // 3. 建立容器
+    // 3. 建立容器（必須先建立 details，才能在 link.onclick 中引用它）
     const details = document.createElement('details');
     details.className = config.classNames.group;
     details.open = state.openGroups[groupKey] !== false; // 預設開啟
     details.dataset.groupKey = groupKey;
 
+    const link = headerItem.querySelector(config.selectors.promptLink);
+    if (link) {
+        // 重新讀取最新名稱（不使用 headerInfo 中可能過時的名稱）
+        const latestName = extractTextName(link);
+        // 設定名稱（保留 icon）
+        setTextName(link, latestName);
+
+        // 在 link 上加監聽，在 capture 階段就阻止原生事件
+        link.addEventListener('click', (e) => {
+            log('[Link Click - Capture] target:', e.target, 'currentTarget:', e.currentTarget);
+            log('[Link Click - Capture] preventDefault and stopPropagation');
+            e.preventDefault();
+            e.stopPropagation();
+            details.open = !details.open;
+            log('[Link Click - Capture] toggled details.open to:', details.open);
+        }, true); // capture 階段優先攔截，阻止原生處理器
+    }
+
     // 4. 建立 Summary (標題列)
     const summary = document.createElement('summary');
-    summary.onclick = (e) => e.preventDefault(); // 擋掉預設行為，由上面 link 控制
+    summary.onclick = (e) => {
+        log('[Summary Click] target:', e.target);
+        e.preventDefault();
+    }; // 擋掉預設行為，由上面 link 控制
     summary.appendChild(headerItem);
     details.appendChild(summary);
 
@@ -63,7 +119,7 @@ function createGroupDOM(headerItem, headerInfo, contentItems) {
     // 6. 監聽開關狀態
     details.ontoggle = () => {
         state.openGroups[groupKey] = details.open;
-        localStorage.setItem(config.storageKeys.openStates, JSON.stringify(state.openGroups));
+        localStorage.setItem(getStorageKey(config.storageKeys.openStates), JSON.stringify(state.openGroups));
     };
 
     return details;
@@ -74,7 +130,9 @@ function createGroupDOM(headerItem, headerInfo, contentItems) {
  */
 export function buildCollapsibleGroups(listContainer) {
   // 強制同步最新的開關狀態
-  state.openGroups = JSON.parse(localStorage.getItem(config.storageKeys.openStates) || '{}');
+  state.openGroups = JSON.parse(localStorage.getItem(getStorageKey(config.storageKeys.openStates)) || '{}');
+
+  log('Building collapsible groups, mode:', state.foldingMode);
 
   if (!listContainer || state.isProcessing) return;
   state.isProcessing = true;
@@ -82,15 +140,22 @@ export function buildCollapsibleGroups(listContainer) {
   try {
     // 1. 先把所有項目拿出來，還原成乾淨的狀態
     const allItems = Array.from(listContainer.querySelectorAll(config.selectors.promptListItem));
-    
+
     allItems.forEach(item => {
       item.classList.remove(config.classNames.isGroupHeader);
-      // 還原名稱
-      if (item.dataset.originalName) {
-        const link = item.querySelector(config.selectors.promptLink);
-        if (link) link.textContent = item.dataset.originalName;
+      // 讀取當前實際名稱（不要用舊緩存）
+      const itemId = item.dataset.pmIdentifier;
+      const link = item.querySelector(config.selectors.promptLink);
+      if (link && itemId) {
+        const currentName = extractTextName(link);
+        // 更新緩存為當前名稱
+        state.originalNames.set(itemId, currentName);
+        // 不需要 setTextName，因為已經是當前名稱了
       }
     });
+
+    // 保存更新後的名稱緩存（只存 originalNames，不要覆蓋其他設定）
+    localStorage.setItem(getStorageKey(config.storageKeys.originalNames), JSON.stringify([...state.originalNames]));
 
     // 2. 清空並重置狀態
     listContainer.innerHTML = '';
@@ -100,7 +165,7 @@ export function buildCollapsibleGroups(listContainer) {
     // 3. 沒啟用就直接塞回去
     if (!state.isEnabled) {
       allItems.forEach(item => listContainer.appendChild(item));
-      return; 
+      return;
     }
 
     // --- 標準模式 (遇到標題就切分) ---
@@ -152,7 +217,7 @@ export function buildCollapsibleGroups(listContainer) {
 
         if (closerIdx !== -1) {
           // 抓出中間這整包 (含結束標題)
-          const groupContent = remaining.splice(0, closerIdx + 1); 
+          const groupContent = remaining.splice(0, closerIdx + 1);
           listContainer.appendChild(createGroupDOM(current, info, groupContent));
         } else {
           listContainer.appendChild(current); // 找不到另一半，當孤兒
@@ -161,9 +226,11 @@ export function buildCollapsibleGroups(listContainer) {
     };
 
     state.foldingMode === 'sandwich' ? buildSandwichGroups() : buildStandardGroups();
-    
+
     // 補上禁用樣式
     applyGroupDisabledStyles(listContainer);
+
+    log('Groups built, total groups:', Object.keys(state.groupHierarchy).length);
 
   } catch (err) {
     console.error('[PF] Oops, 分組壞了:', err);
@@ -189,10 +256,10 @@ function applyGroupDisabledStyles(listContainer) {
     listContainer.querySelectorAll(`.${config.classNames.group}`).forEach(group => {
         const key = group.dataset.groupKey;
         if (!key) return;
-        
+
         const isDisabled = state.groupHeaderStatus[key] === false;
         const contentItems = group.querySelectorAll(`.${config.classNames.groupContent} > li`);
-        
+
         contentItems.forEach(item => {
             item.classList.toggle('prompt-controlled-by-disabled-group', isDisabled);
         });
