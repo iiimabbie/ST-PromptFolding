@@ -219,19 +219,20 @@ function startManualSelection() {
     startBtn.style.pointerEvents = 'none';
     startBtn.id = 'prompt-folding-finish-select';
 
-    // 3. 建立浮動面板（已選數量 + ✓完成 + ✗取消）
+    // 3. 建立浮動面板（已選數量 + ✓ + ✗）
     const panel = document.createElement('div');
     panel.id = 'prompt-folding-float-panel';
     panel.innerHTML = `
         <span id="prompt-folding-float-count"></span>
         <div id="prompt-folding-float-finish" class="menu_button menu_button_icon">
-            <i class="fa-solid fa-check"></i> 完成
+            <i class="fa-solid fa-check"></i>
         </div>
         <div id="prompt-folding-float-cancel" class="menu_button menu_button_icon">
-            <i class="fa-solid fa-xmark"></i> 取消
+            <i class="fa-solid fa-xmark"></i>
         </div>
     `;
     document.body.appendChild(panel);
+    positionFloatingPanel(panel);
 
     panel.querySelector('#prompt-folding-float-finish').onclick = finishManualSelection;
     panel.querySelector('#prompt-folding-float-cancel').onclick = cancelManualSelection;
@@ -243,6 +244,14 @@ function startManualSelection() {
 function updateFloatingCount() {
     const el = document.getElementById('prompt-folding-float-count');
     if (el) el.textContent = `已選 ${state.manualHeaders.size} 個`;
+}
+
+function positionFloatingPanel(panel) {
+    const nav = document.getElementById('left-nav-panel');
+    if (!nav) return;
+    const rect = nav.getBoundingClientRect();
+    panel.style.left = `${rect.left + rect.width / 2}px`;
+    panel.style.transform = 'translateX(-50%)';
 }
 
 function restoreSelectButton() {
@@ -413,7 +422,7 @@ function loadMetaInfo() {
         .then(logs => {
             const icon = document.getElementById('prompt-folding-changelog-icon');
             if (icon) {
-                const text = logs.map(l => `[${l.date}] v${l.version}\n${l.changes.map(c=>`• ${c}`).join('\n')}`).join('\n\n');
+                const text = logs.map(l => `[${l.date}] v${l.version}\n${l.changes.map(c => `• ${c}`).join('\n')}`).join('\n\n');
                 icon.title = `更新日誌\n\n${text}`;
             }
         });
