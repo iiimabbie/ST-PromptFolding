@@ -4,10 +4,12 @@
   "requires": [],
   "optional": [],
   "js": "index.js",
-  "css": ["collapsible-prompt.css"],
+  "css": [
+    "collapsible-prompt.css"
+  ],
   "settings": "settings.html",
   "type": "module",
   "author": "mingyu",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "homePage": "https://github.com/lilminzyu/ST-PromptFolding"
 }
