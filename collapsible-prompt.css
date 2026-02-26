@@ -359,9 +359,9 @@ li.completion_prompt_manager_prompt:has(.mingyu-header-checkbox) {
     padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
-    background: rgba(25, 25, 35, 0.75);
+    box-shadow: 0 4px 20px var(--SmartThemeFastUIBGColor);
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--SmartThemeFastUIBGColor) 75%, transparent);
     user-select: none;
 }
 
