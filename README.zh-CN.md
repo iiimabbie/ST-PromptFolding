@@ -1,10 +1,21 @@
-[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+<div align="center">
+
+[English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md)
 
 # Prompt Folding
 
-[![License: BY-NC-ND-LinkOnly](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)](LICENSE)
+**把 SillyTavern 提示词管理器整理成可折叠分组**
 
 这个 SillyTavern 扩展可以把 OpenAI／Chat Completion 的提示词管理器整理成可折叠分组。停用分组标题后，组内可开关的提示词会从提示词列表中排除。
+
+![Version](https://img.shields.io/github/manifest-json/v/iiimabbie/ST-PromptFolding?label=version&color=8a5cf6)
+![SillyTavern](https://img.shields.io/badge/SillyTavern-extension-e8a87c)
+![i18n](https://img.shields.io/badge/i18n-繁中%20·%20简中%20·%20EN-2ea44f)
+![License](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)
+
+[功能](#功能) · [折叠模式](#折叠模式) · [使用](#使用) · [安装](#安装)
+
+</div>
 
 > [!NOTE]
 > 界面语言跟随 SillyTavern 的语言设置。
@@ -49,5 +60,3 @@
 1. 在 SillyTavern 的 **扩展程序** 标签页中，选择 **安装扩展程序**，输入 `https://github.com/iiimabbie/ST-PromptFolding` 安装。
 2. 保持扩展文件夹名为 `ST-PromptFolding`，并启用 **Prompt Folding**。
 3. 打开 OpenAI／Chat Completion 提示词管理器，扩展会在此运行。
-
-授权条款请参阅 [自定义 BY-NC-ND-LinkOnly 许可协议](LICENSE)。

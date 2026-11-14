@@ -1,10 +1,21 @@
-[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+<div align="center">
+
+[English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md)
 
 # Prompt Folding
 
-[![License: BY-NC-ND-LinkOnly](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)](LICENSE)
+**Collapsible groups for the SillyTavern Prompt Manager**
 
 A SillyTavern extension that organizes the OpenAI/Chat Completion Prompt Manager into collapsible groups. Disabling a group header excludes its toggleable contents from the prompt collection.
+
+![Version](https://img.shields.io/github/manifest-json/v/iiimabbie/ST-PromptFolding?label=version&color=8a5cf6)
+![SillyTavern](https://img.shields.io/badge/SillyTavern-extension-e8a87c)
+![i18n](https://img.shields.io/badge/i18n-繁中%20·%20简中%20·%20EN-2ea44f)
+![License](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)
+
+[Features](#features) · [Folding modes](#folding-modes) · [Usage](#usage) · [Install](#install)
+
+</div>
 
 > [!NOTE]
 > The interface follows SillyTavern's language setting.
@@ -49,5 +60,3 @@ Attack / Defense
 1. In SillyTavern's **Extensions** tab, choose **Install extension** and enter `https://github.com/iiimabbie/ST-PromptFolding`.
 2. Keep the extension folder named `ST-PromptFolding` and enable **Prompt Folding**.
 3. Open the OpenAI/Chat Completion Prompt Manager; the extension works there.
-
-See the [Custom BY-NC-ND-LinkOnly License](LICENSE) for terms.

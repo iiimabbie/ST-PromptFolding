@@ -1,10 +1,21 @@
-[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+<div align="center">
+
+[English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md)
 
 # Prompt Folding
 
-[![License: BY-NC-ND-LinkOnly](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)](LICENSE)
+**把 SillyTavern 提示詞管理器整理成可摺疊群組**
 
 這個 SillyTavern 擴充功能能將 OpenAI／Chat Completion 的提示詞管理器整理成可摺疊群組。停用群組標題後，組內可開關的提示詞會從提示詞清單中排除。
+
+![Version](https://img.shields.io/github/manifest-json/v/iiimabbie/ST-PromptFolding?label=version&color=8a5cf6)
+![SillyTavern](https://img.shields.io/badge/SillyTavern-extension-e8a87c)
+![i18n](https://img.shields.io/badge/i18n-繁中%20·%20简中%20·%20EN-2ea44f)
+![License](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)
+
+[功能](#功能) · [摺疊模式](#摺疊模式) · [使用方式](#使用方式) · [安裝](#安裝)
+
+</div>
 
 > [!NOTE]
 > 介面語言會跟隨 SillyTavern 的語言設定。
@@ -49,5 +60,3 @@
 1. 在 SillyTavern 的 **擴充功能** 分頁中，選擇 **安裝擴充功能**，輸入 `https://github.com/iiimabbie/ST-PromptFolding` 安裝。
 2. 保持擴充功能資料夾名稱為 `ST-PromptFolding`，並啟用 **Prompt Folding**。
 3. 開啟 OpenAI／Chat Completion 提示詞管理器，擴充功能會在此運作。
-
-授權條款請參閱 [自訂 BY-NC-ND-LinkOnly 授權條款](LICENSE)。
