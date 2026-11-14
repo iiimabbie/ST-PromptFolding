@@ -1,3 +1,4 @@
+import { t, translate, applyLocale } from '../../../i18n.js';
 import { state, saveCustomSettings, config, log, loadFromPreset, exportConfigFromPreset, importConfigToCurrentPreset, getCurrentPresetName, getAllPresetNames, buildDividerRegex } from './state.js';
 import { buildCollapsibleGroups } from './prompt-folding.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../popup.js';
@@ -20,7 +21,7 @@ export async function createSettingsPanel(pmContainer, listContainer) {
         if (!pmContainer.isConnected || pmContainer.querySelector(config.selectors.promptList) !== listContainer || document.getElementById('prompt-folding-settings')) return;
 
         const header = pmContainer.querySelector('.completion_prompt_manager_header');
-        (header || pmContainer).insertAdjacentHTML(header ? 'afterend' : 'beforebegin', html);
+        (header || pmContainer).insertAdjacentHTML(header ? 'afterend' : 'beforebegin', applyLocale(html));
 
         initLogic();
     } catch (err) {
@@ -76,7 +77,7 @@ function initLogic() {
         state.debugMode = els.debugCheckbox.checked;
         saveCustomSettings();
         log('Debug mode toggled:', state.debugMode);
-        toastr.info(`Debug 模式：${state.debugMode ? '開啟' : '關閉'}`);
+        toastr.info(t`Debug 模式：${state.debugMode ? t`開啟` : t`關閉`}`);
     };
 
     // 模式切換
@@ -87,7 +88,7 @@ function initLogic() {
             updateModeUI();
             refreshList();
             log('Folding mode changed:', state.foldingMode);
-            toastr.success(`模式切換: ${getModeDisplayName()}`);
+            toastr.success(t`模式切換: ${getModeDisplayName()}`);
         }
     });
 
@@ -121,7 +122,7 @@ function updateModeUI() {
 }
 
 function getModeDisplayName() {
-    const names = { manual: '手動選擇', standard: '標準模式', sandwich: '包覆模式' };
+    const names = { manual: t`手動選擇`, standard: t`標準模式`, sandwich: t`包覆模式` };
     return names[state.foldingMode] || state.foldingMode;
 }
 
@@ -129,10 +130,10 @@ async function handleReset(els) {
     log('Reset button clicked');
 
     const confirmed = await callGenericPopup(
-        `<div>確定重設所有設定？無法復原喔。</div>`,
+        `<div>${t`確定重設所有設定？無法復原喔。`}</div>`,
         POPUP_TYPE.CONFIRM,
         '',
-        { okButton: '重設', cancelButton: '取消' },
+        { okButton: t`重設`, cancelButton: t`取消` },
     );
 
     if (!confirmed) return;
@@ -147,7 +148,7 @@ async function handleReset(els) {
     updateModeUI();
 
     refreshList();
-    toastr.info('已重設為預設值');
+    toastr.info(t`已重設為預設值`);
 }
 
 function refreshList() {
@@ -191,7 +192,7 @@ function applyDividerChanges() {
     const textarea = document.getElementById('prompt-folding-dividers');
     const lines = textarea.value.split('\n').map(x => x.trim()).filter(x => x);
     if ((state.foldingMode === 'standard' || state.foldingMode === 'sandwich') && lines.length === 0) {
-        toastr.warning('請至少輸入一個符號');
+        toastr.warning(t`請至少輸入一個符號`);
         return;
     }
     state.customDividers = lines;
@@ -201,7 +202,7 @@ function applyDividerChanges() {
 
     _dividerSnapshot = null;
     document.getElementById('prompt-folding-float-wrapper')?.remove();
-    toastr.success('分隔符號已套用');
+    toastr.success(t`分隔符號已套用`);
 }
 
 function cancelDividerChanges() {
@@ -226,7 +227,7 @@ function startManualSelection() {
     log('Start manual header selection');
 
     if (!listContainerRef) {
-        toastr.error('找不到提示詞列表');
+        toastr.error(t`找不到提示詞列表`);
         return;
     }
 
@@ -261,7 +262,7 @@ function startManualSelection() {
     });
 
     const startBtn = document.getElementById('prompt-folding-start-select');
-    startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 選擇中...';
+    startBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t`選擇中...`}`;
     startBtn.style.background = 'rgba(255, 255, 255, 0.1)';
     startBtn.style.opacity = '0.5';
     startBtn.style.pointerEvents = 'none';
@@ -289,18 +290,18 @@ function startManualSelection() {
     panel.querySelector('#prompt-folding-float-cancel').onclick = cancelManualSelection;
 
     updateFloatingCount();
-    toastr.info('請勾選要當資料夾的條目，完成後點擊「完成」');
+    toastr.info(t`請勾選要當資料夾的條目，完成後點擊「完成」`);
 }
 
 function updateFloatingCount() {
     const el = document.getElementById('prompt-folding-float-count');
-    if (el) el.textContent = `已選 ${state.manualHeaders.size} 個`;
+    if (el) el.textContent = t`已選 ${state.manualHeaders.size} 個`;
 }
 
 function restoreSelectButton() {
     const btn = document.getElementById('prompt-folding-finish-select');
     if (!btn) return;
-    btn.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> 開始選擇資料夾';
+    btn.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> ${t`開始選擇資料夾`}`;
     btn.style.background = 'rgba(74, 158, 255, 0.2)';
     btn.style.opacity = '';
     btn.style.pointerEvents = '';
@@ -322,7 +323,7 @@ function finishManualSelection() {
     saveCustomSettings();
     refreshList();
 
-    toastr.success(`已選擇 ${state.manualHeaders.size} 個資料夾`);
+    toastr.success(t`已選擇 ${state.manualHeaders.size} 個資料夾`);
 }
 
 export function cancelManualSelection() {
@@ -342,7 +343,7 @@ export function cancelManualSelection() {
 
     restoreSelectButton();
 
-    toastr.info('已取消，還原至修改前的選擇');
+    toastr.info(t`已取消，還原至修改前的選擇`);
 }
 
 // 折設定：把 #range_block_openai 整體 + #openai_settings 的前段折進一個 <details>
@@ -359,7 +360,7 @@ export function applyFoldSettings(fold) {
         details.id = DETAILS_ID;
 
         const summary = document.createElement('summary');
-        summary.textContent = '詳細設定摺疊';
+        summary.textContent = t`詳細設定摺疊`;
         summary.className = 'pf-fold-settings-summary';
         details.appendChild(summary);
 
@@ -428,11 +429,11 @@ function loadAvailablePresets(selectElement) {
     const presets = getAllPresetNames().filter(p => p !== currentPreset);
 
     if (presets.length === 0) {
-        selectElement.innerHTML = '<option value="">（無其他 Preset）</option>';
+        selectElement.innerHTML = `<option value="">${t`（無其他預設設定檔）`}</option>`;
         return;
     }
 
-    selectElement.innerHTML = '<option value="">選擇要複製的 Preset</option>';
+    selectElement.innerHTML = `<option value="">${t`選擇要複製的預設設定檔`}</option>`;
     presets.forEach(preset => {
         const option = document.createElement('option');
         option.value = preset;
@@ -446,19 +447,19 @@ async function handleCopyConfig(els) {
     const sourcePreset = els.copyFromPresetSelect.value;
 
     if (!sourcePreset) {
-        toastr.warning('請先選擇要複製的 Preset');
+        toastr.warning(t`請先選擇要複製的預設設定檔`);
         return;
     }
 
     const confirmed = await callGenericPopup(
-        `<div>確定要從「${sourcePreset}」複製配置到當前 Preset 嗎？<br><br>` +
-        `會複製：<br>` +
-        `• 摺疊模式<br>` +
-        `• 分組符號設定<br>` +
-        `• 手動選擇的資料夾（UUID 匹配）<br></div>`,
+        `<div>${t`確定要從「${sourcePreset}」複製配置到目前預設設定檔嗎？`}<br><br>` +
+        `${t`會複製：`}<br>` +
+        `• ${t`摺疊模式`}<br>` +
+        `• ${t`分組符號設定`}<br>` +
+        `• ${t`手動選擇的資料夾（UUID 匹配）`}<br></div>`,
         POPUP_TYPE.CONFIRM,
         '',
-        { okButton: '複製', cancelButton: '取消' },
+        { okButton: t`複製`, cancelButton: t`取消` },
     );
 
     if (!confirmed) return;
@@ -468,12 +469,12 @@ async function handleCopyConfig(els) {
 
         const configData = await exportConfigFromPreset(sourcePreset);
         if (!configData) {
-            toastr.warning(`「${sourcePreset}」尚無摺疊配置`);
+            toastr.warning(t`「${sourcePreset}」尚無摺疊配置`);
             return;
         }
 
         if (!listContainerRef) {
-            toastr.error('找不到提示詞列表');
+            toastr.error(t`找不到提示詞列表`);
             return;
         }
 
@@ -484,15 +485,15 @@ async function handleCopyConfig(els) {
         refreshList();
 
         const failed = matchResults.failed.length;
-        let message = `配置複製完成！\n• UUID 匹配：${matchResults.byUuid} 個`;
+        let message = t`配置複製完成！\n• UUID 匹配：${matchResults.byUuid} 個`;
         if (failed > 0) {
-            message += `\n• 無法匹配：${failed} 個`;
+            message += t`\n• 無法匹配：${failed} 個`;
         }
-        toastr.success(message, '複製成功', { timeOut: 4000 });
+        toastr.success(message, t`複製成功`, { timeOut: 4000 });
 
     } catch (err) {
         console.error('[PF] Copy config failed:', err);
-        toastr.error('複製配置時發生錯誤：' + err.message);
+        toastr.error(t`複製配置時發生錯誤：${err.message}`);
     }
 }
 
@@ -508,8 +509,8 @@ function loadMetaInfo() {
         .then(logs => {
             const icon = document.getElementById('prompt-folding-changelog-icon');
             if (icon) {
-                const text = logs.map(l => `[${l.date}] v${l.version}\n${l.changes.map(c => `• ${c}`).join('\n')}`).join('\n\n');
-                icon.title = `更新日誌\n\n${text}`;
+                const text = logs.map(l => `[${l.date}] v${l.version}\n${l.changes.map(c => `• ${translate(c)}`).join('\n')}`).join('\n\n');
+                icon.title = `${t`更新日誌`}\n\n${text}`;
             }
         });
 }

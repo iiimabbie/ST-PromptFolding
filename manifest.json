@@ -4,10 +4,34 @@
   "requires": [],
   "optional": [],
   "js": "index.js",
-  "css": ["collapsible-prompt.css"],
+  "css": [
+    "collapsible-prompt.css"
+  ],
   "settings": "settings.html",
   "type": "module",
   "author": "iiimabbie",
-  "version": "2.8.0",
-  "homePage": "https://github.com/iiimabbie/ST-PromptFolding"
-}
+  "version": "2.9.0",
+  "homePage": "https://github.com/iiimabbie/ST-PromptFolding",
+  "i18n": {
+    "en": "i18n/en.json",
+    "en-us": "i18n/en.json",
+    "en-gb": "i18n/en.json",
+    "en-au": "i18n/en.json",
+    "en-ca": "i18n/en.json",
+    "ar-sa": "i18n/en.json",
+    "de-de": "i18n/en.json",
+    "es-es": "i18n/en.json",
+    "fr-fr": "i18n/en.json",
+    "is-is": "i18n/en.json",
+    "it-it": "i18n/en.json",
+    "ja-jp": "i18n/en.json",
+    "ko-kr": "i18n/en.json",
+    "nl-nl": "i18n/en.json",
+    "pt-pt": "i18n/en.json",
+    "ru-ru": "i18n/en.json",
+    "th-th": "i18n/en.json",
+    "uk-ua": "i18n/en.json",
+    "vi-vn": "i18n/en.json",
+    "zh-cn": "i18n/zh-cn.json"
+  }
+}

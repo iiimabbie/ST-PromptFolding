@@ -1,3 +1,4 @@
+import { t } from '../../../i18n.js';
 import { config, state, log, loadFromPreset, saveToPreset, flushPresetSave, getStateForSave, getCurrentPresetFoldingData, getCurrentPresetName } from './state.js';
 import { buildCollapsibleGroups, toggleAllGroups } from './prompt-folding.js';
 import { createSettingsPanel, cancelManualSelection, cancelDividerEdit, updateSettingsUI, applyFoldSettings } from './settings-ui.js';
@@ -87,11 +88,11 @@ function setupToggleButton(listContainer) {
 
     // 功能按鈕
     container.append(
-        createBtn('fa-expand', '展開所有', () => {
+        createBtn('fa-expand', t`展開所有`, () => {
             log('Expand all button clicked');
             toggleAllGroups(listContainer, true);
         }, 'mingyu-expand-all'),
-        createBtn('fa-compress', '收合所有', () => {
+        createBtn('fa-compress', t`收合所有`, () => {
             log('Collapse all button clicked');
             toggleAllGroups(listContainer, false);
         }, 'mingyu-collapse-all'),
@@ -108,13 +109,13 @@ function setupToggleButton(listContainer) {
 
     const updateToggleState = () => {
         toggleBtn.textContent = state.isEnabled ? '🟢' : '🔴';
-        toggleBtn.title = state.isEnabled ? '點擊停用' : '點擊啟用';
+        toggleBtn.title = state.isEnabled ? t`點擊停用` : t`點擊啟用`;
     };
     updateToggleState();
     container.append(toggleBtn);
 
     // 設定按鈕
-    const settingsBtn = createBtn('⚙️', '分組設定', () => {
+    const settingsBtn = createBtn('⚙️', t`分組設定`, () => {
         log('Settings button clicked');
         const panel = document.getElementById('prompt-folding-settings');
         if (panel) {

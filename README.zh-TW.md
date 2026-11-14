@@ -4,16 +4,16 @@
 
 [![License: BY-NC-ND-LinkOnly](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)](LICENSE)
 
-這個 SillyTavern 擴充功能能將 OpenAI／Chat Completion 的提示詞管理器整理成可摺疊群組。停用群組標題後，組內提示詞會從提示詞清單中排除。
+這個 SillyTavern 擴充功能能將 OpenAI／Chat Completion 的提示詞管理器整理成可摺疊群組。停用群組標題後，組內可開關的提示詞會從提示詞清單中排除。
 
 > [!NOTE]
-> 擴充功能介面使用繁體中文；下文按鈕名稱與畫面一致。
+> 介面語言會跟隨 SillyTavern 的語言設定。
 
 ## 功能
 
 - 手動選擇標題，或使用自訂標示符號依名稱分組。
 - 個別展開、收合群組，或一次展開、收合全部群組。
-- 在 Preset 之間複製摺疊設定，並隨 Preset 一同匯出。
+- 在預設設定檔之間複製摺疊設定，並隨預設設定檔一同匯出。
 
 ## 摺疊模式
 
@@ -36,18 +36,18 @@
 
 - 點群組箭頭或標題名稱即可展開、收合；點標題名稱不會開啟編輯器。
 - 工具列的 **展開所有**、**收合所有** 會控制全部群組。**🟢／🔴** 切換分組與群組過濾功能；**⚙️** 開啟設定。
-- 停用標題後，組內所有 SillyTavern 允許開關的子項都視為關閉，包括角色描述、世界書與聊天紀錄；子項本身的開關不會被改動。重建分組時會套用停用樣式。
-- 在 **從其他 Preset 複製配置** 中選擇來源並按 **複製**。手動標題依 UUID 配對，無法配對的標題會被捨棄。
-- **折設定** 可收合 OpenAI 設定區，其狀態獨立於 Preset 儲存。匯出 Preset 會包含摺疊設定；匯入時若有設定則會載入。
-- **重設所有設定** 會將目前 Preset 的摺疊設定恢復預設值。
+- 停用標題後，組內所有 SillyTavern 允許開關的子項都視為關閉，例如可開關的角色描述與世界書；子項本身的開關不會被改動。重建分組時會套用停用樣式。
+- 在 **從其他預設設定檔複製配置** 中選擇來源並按 **複製**。手動標題依 UUID 配對，無法配對的標題會被捨棄。
+- **折設定** 可收合 OpenAI 設定區，其狀態獨立於預設設定檔儲存。匯出預設設定檔會包含摺疊設定；匯入時若有設定則會載入。
+- **重設所有設定** 會將目前預設設定檔的摺疊設定恢復預設值。
 
 > [!WARNING]
 > 不建議拖曳提示詞來調整順序。
 
 ## 安裝
 
-1. 在 SillyTavern 的 **Extensions** 分頁中，使用 `https://github.com/iiimabbie/ST-PromptFolding` 安裝。
+1. 在 SillyTavern 的 **擴充功能** 分頁中，選擇 **安裝擴充功能**，輸入 `https://github.com/iiimabbie/ST-PromptFolding` 安裝。
 2. 保持擴充功能資料夾名稱為 `ST-PromptFolding`，並啟用 **Prompt Folding**。
 3. 開啟 OpenAI／Chat Completion 提示詞管理器，擴充功能會在此運作。
 
-授權條款請參閱 [Custom BY-NC-ND-LinkOnly License](LICENSE)。
+授權條款請參閱 [自訂 BY-NC-ND-LinkOnly 授權條款](LICENSE)。

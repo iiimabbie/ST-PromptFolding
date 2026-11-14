@@ -2,32 +2,32 @@
     <div class="inline-drawer-content" style="display: block;">
 
         <div style="position: relative;">
-            <h3 style="margin: 0;">摺疊模式設定</h3>
-            <span id="prompt-folding-reset-icon" class="mingyu-help-icon" style="right: 26px;" title="重設所有設定"><i class="fa-solid fa-rotate-left" style="font-size: 11px;"></i></span>
-            <span id="prompt-folding-changelog-icon" class="mingyu-help-icon" title="載入更新日誌中...">i</span>
+            <h3 style="margin: 0;"><span data-i18n="摺疊模式設定">摺疊模式設定</span></h3>
+            <span id="prompt-folding-reset-icon" class="mingyu-help-icon" style="right: 26px;" title="重設所有設定" data-i18n="[title]重設所有設定"><i class="fa-solid fa-rotate-left" style="font-size: 11px;"></i></span>
+            <span id="prompt-folding-changelog-icon" class="mingyu-help-icon" title="載入更新日誌中..." data-i18n="[title]載入更新日誌中...">i</span>
         </div>
 
         <div id="prompt-folding-mode-radios" class="flex-container flexFlowColumn" style="gap: 10px; align-items: flex-start; margin-bottom: 15px;">
 
             <!-- 手動選擇模式（推薦） -->
-            <label class="radio_label" title="手動選擇模式：自己勾選要當資料夾的條目，最靈活" style="width: 100%; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 4px;">
+            <label class="radio_label" title="手動選擇模式：自己勾選要當資料夾的條目，最靈活" data-i18n="[title]手動選擇模式：自己勾選要當資料夾的條目，最靈活" style="width: 100%; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 4px;">
                 <input type="radio" name="folding-mode" value="manual" id="prompt-folding-mode-manual">
-                <span style="font-weight: 500;">手動選擇模式 <small style="color: #4a9eff;">(方便👍🏻)</small></span>
+                <span style="font-weight: 500;"><span data-i18n="手動選擇模式">手動選擇模式</span> <small style="color: #4a9eff;"><span data-i18n="(方便👍🏻)">(方便👍🏻)</span></small></span>
             </label>
 
             <!-- 舊版模式（可折疊） -->
             <details id="prompt-folding-legacy-modes" style="width: 100%;">
-                <summary style="font-size: 11px; opacity: 0.4; cursor: pointer; list-style: none; user-select: none;">▸ 舊版模式</summary>
+                <summary style="font-size: 11px; opacity: 0.4; cursor: pointer; list-style: none; user-select: none;"><span data-i18n="▸ 舊版模式">▸ 舊版模式</span></summary>
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
                     <!-- 標準模式 -->
-                    <label class="radio_label" title="標準模式：從一個標頭開始，摺疊其後的所有項目" style="width: 100%; opacity: 0.7;">
+                    <label class="radio_label" title="標準模式：從一個標頭開始，摺疊其後的所有項目" data-i18n="[title]標準模式：從一個標頭開始，摺疊其後的所有項目" style="width: 100%; opacity: 0.7;">
                         <input type="radio" name="folding-mode" value="standard" id="prompt-folding-mode-standard">
-                        <span>標準模式 <small>(需設定分隔符號)</small></span>
+                        <span><span data-i18n="標準模式">標準模式</span> <small><span data-i18n="(需設定分隔符號)">(需設定分隔符號)</span></small></span>
                     </label>
                     <!-- 包覆模式 -->
-                    <label class="radio_label" title="包覆模式：標頭依序兩兩配對，包住中間內容（不需同名）" style="width: 100%; opacity: 0.7;">
+                    <label class="radio_label" title="包覆模式：標頭依序兩兩配對，包住中間內容（不需同名）" data-i18n="[title]包覆模式：標頭依序兩兩配對，包住中間內容（不需同名）" style="width: 100%; opacity: 0.7;">
                         <input type="radio" name="folding-mode" value="sandwich" id="prompt-folding-mode-sandwich">
-                        <span>包覆模式 <small>(需設定分隔符號)</small></span>
+                        <span><span data-i18n="包覆模式">包覆模式</span> <small><span data-i18n="(需設定分隔符號)">(需設定分隔符號)</span></small></span>
                     </label>
                 </div>
             </details>
@@ -37,9 +37,9 @@
         <div id="divider-settings" style="margin-bottom: 15px;">
             <div style="position: relative; margin-bottom: 8px;">
                 <label for="prompt-folding-dividers">
-                    <span>分組標示符號（一行一個）</span>
+                    <span><span data-i18n="分組標示符號（一行一個）">分組標示符號（一行一個）</span></span>
                 </label>
-                <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞">?</span>
+                <span class="mingyu-help-icon" title="輸入用於標識群組標題的符號或文字。&#10;&#10;範例：&#10;• 輸入「=」會匹配「=」開頭的提示詞&#10;• 輸入「---」會匹配「---」開頭的提示詞" data-i18n="[title]輸入用於標識群組標題的符號或文字。">?</span>
             </div>
             <textarea id="prompt-folding-dividers" class="text_pole textarea_compact" rows="4" placeholder="=&#10;-"></textarea>
         </div>
@@ -47,8 +47,8 @@
         <!-- 手動選擇按鈕（只在 manual 模式顯示） -->
         <div id="manual-mode-controls" style="display: none; margin-bottom: 15px;">
             <div class="flex-container justifyCenter">
-                <div id="prompt-folding-start-select" class="menu_button menu_button_icon" style="background: rgba(74, 158, 255, 0.2);" title="點擊後，每個條目旁會出現勾選框，完成後透過懸浮面板確認或取消">
-                    <i class="fa-solid fa-hand-pointer"></i> 開始選擇資料夾
+                <div id="prompt-folding-start-select" class="menu_button menu_button_icon" style="background: rgba(74, 158, 255, 0.2);" title="點擊後，每個條目旁會出現勾選框，完成後透過懸浮面板確認或取消" data-i18n="[title]點擊後，每個條目旁會出現勾選框，完成後透過懸浮面板確認或取消">
+                    <i class="fa-solid fa-hand-pointer"></i> <span data-i18n="開始選擇資料夾">開始選擇資料夾</span>
                 </div>
             </div>
         </div>
@@ -56,19 +56,19 @@
         <!-- 跨 Preset 複製配置 -->
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
             <div style="position: relative; margin-bottom: 10px;">
-                <h4 style="margin: 0; font-size: 13px;">從其他 Preset 複製配置</h4>
-                <span class="mingyu-help-icon" title="從其他 Preset 複製摺疊配置到當前 Preset。&#10;&#10;透過條目 UUID 匹配，同一個 Preset 建立的條目 UUID 相同，可以正確對應。">?</span>
+                <h4 style="margin: 0; font-size: 13px;"><span data-i18n="從其他預設設定檔複製配置">從其他預設設定檔複製配置</span></h4>
+                <span class="mingyu-help-icon" title="從其他預設設定檔複製摺疊配置到目前預設設定檔。&#10;&#10;透過條目 UUID 匹配，同一個預設設定檔建立的條目 UUID 相同，可以正確對應。" data-i18n="[title]從其他預設設定檔複製摺疊配置到目前預設設定檔。">?</span>
             </div>
             <div class="flex-container" style="gap: 8px; align-items: center;">
                 <select id="prompt-folding-copy-from-preset" class="text_pole" style="flex: 1;">
-                    <option value="">（載入中...）</option>
+                    <option value="" data-i18n="（載入中...）">（載入中...）</option>
                 </select>
                 <div id="prompt-folding-copy-config-btn" class="menu_button menu_button_icon" style="flex-shrink: 0;">
-                    <i class="fa-solid fa-copy"></i> 複製
+                    <i class="fa-solid fa-copy"></i> <span data-i18n="複製">複製</span>
                 </div>
             </div>
             <small style="display: block; margin-top: 8px; opacity: 0.7; font-size: 11px;">
-                會複製：摺疊模式、分組設定、手動選擇的資料夾
+                <span data-i18n="會複製：摺疊模式、分組設定、手動選擇的資料夾">會複製：摺疊模式、分組設定、手動選擇的資料夾</span>
             </small>
         </div>
 
@@ -76,11 +76,11 @@
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 16px;">
             <label class="checkbox_label" style="display: flex; align-items: center; cursor: pointer; opacity: 0.7;">
                 <input type="checkbox" id="prompt-folding-debug" style="margin-right: 8px;">
-                <small>Debug 模式（開發用）</small>
+                <small><span data-i18n="Debug 模式（開發用）">Debug 模式（開發用）</span></small>
             </label>
             <label class="checkbox_label" style="display: flex; align-items: center; cursor: pointer; opacity: 0.7;">
                 <input type="checkbox" id="prompt-folding-fold-settings" style="margin-right: 8px;">
-                <small>折設定</small>
+                <small><span data-i18n="折設定">折設定</span></small>
             </label>
         </div>
 
