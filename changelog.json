@@ -1,6 +1,6 @@
 [
   {
-    "version": "2.9.0",
+    "version": "2.8.1",
     "date": "2026.11.15",
     "changes": [
       "介面支援繁中、簡中、英文，跟著 SillyTavern 的語言切換"
