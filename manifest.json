@@ -7,7 +7,7 @@
   "css": ["collapsible-prompt.css"],
   "settings": "settings.html",
   "type": "module",
-  "author": "mingyu",
+  "author": "iiimabbie",
   "version": "2.7.1",
-  "homePage": "https://github.com/lilminzyu/ST-PromptFolding"
+  "homePage": "https://github.com/iiimabbie/ST-PromptFolding"
 }

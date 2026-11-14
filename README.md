@@ -1,105 +1,53 @@
-[中文 (繁體)](README.zh-TW.md)
+[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
 
----
+# Prompt Folding
 
-# Prompt Folding for SillyTavern
+[![License: BY-NC-ND-LinkOnly](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)](LICENSE)
 
-An extension that organizes your SillyTavern Prompt Manager into clean, collapsible sections. It allows for efficient navigation and group-level control over your prompts using simple header markers.
+A SillyTavern extension that organizes the OpenAI/Chat Completion Prompt Manager into collapsible groups. Disabling a group header excludes its contents from the prompt collection.
 
-## Key Features
+> [!NOTE]
+> The extension UI is in Traditional Chinese; labels below appear as shown in the UI.
 
-- **Flexible Grouping**: Choose between automatic marker-based grouping or manual selection mode.
-- **Manual Selection Mode**: Click checkboxes to manually select which prompts become folder headers - no need for special naming conventions.
-- **Group Control Logic**:
-  - **Fold/Unfold**: Click the header text to toggle visibility.
-  - **Enable/Disable**: Disabling a group header prompt will automatically **filter out all prompts inside that group**. They will not be sent to the AI. This allows for quick context switching.
-- **Cross-Preset Config Copy**: Copy folding configurations from other Presets with smart UUID matching, making it easy to migrate settings when Preset authors update their presets.
-- **Fold Settings Panel**: A checkbox to collapse the OpenAI API parameter sliders (context size, temperature, etc.) into a single `<details>` block, keeping your workspace tidy. State is saved to localStorage independently of presets.
-- **Three Folding Modes**: Supports "Manual Selection" (recommended), "Standard Mode", and "Sandwich Mode" to suit your organization style.
-- **Batch Actions**: Expand All / Collapse All with a single click.
-- **Customizable**: Define your own header markers via settings (for Standard/Sandwich modes).
-- **Debug Mode**: Toggle console logging for development and troubleshooting.
-- **Lightweight**: Dependency-free and integrates seamlessly with the existing UI.
+## Features
 
-## Folding Modes
+- Choose manual headers or group prompts by name using configurable markers.
+- Expand or collapse individual groups or all groups at once.
+- Copy folding settings between presets and include them in preset exports.
 
-You can switch between modes instantly in the settings panel:
+## Folding modes
 
-### 1. Manual Selection Mode (Recommended) 👍
+### Manual selection
+In **分組設定** (⚙️), choose **手動選擇模式** and click **開始選擇資料夾**. Check the prompts to use as headers, then confirm with the green check or cancel with the red ×. Each header groups the following prompts up to the next header.
 
-The most flexible mode. Click "Start Selecting Folders" in settings, then check the boxes next to prompts you want to use as folder headers. No special naming required!
+### Standard mode
+Under **舊版模式**, choose **標準模式**. Prompt names starting with a configured marker become headers; the defaults are `=` and `-`. Edit **分組標示符號（一行一個）** and confirm with the check to apply changes.
 
-* **How to use:**
-  1. Open settings (⚙️ button)
-  2. Click "Start Selecting Folders"
-  3. Check the prompts you want as folder headers
-  4. Click "Finish Selection"
-* *Best for:* Maximum flexibility and ease of use.
+### Sandwich mode
+Under **舊版模式**, choose **包覆模式**. Each marked header pairs with the next marked header; the group contains everything between them, including the closing header. Names need not match.
 
-### 2. Standard Mode
-When a header is found, it groups all subsequent items under it until the next header is encountered.
-* *Best for:* Categorizing long lists of functional prompts.
-* **Requires:** Prompt names starting with divider symbols (e.g., `=Main`, `---Utilities`)
-
-### 3. Sandwich Mode
-Requires a pair of identical headers. It groups the opening header, the closing header, and all items in between into a single section.
-* *Best for:* deeply nested or specific scenario blocks.
-* **Requires:** Matching pairs of headers
-* **Example:**
-  ```text
-  ==== Combat Logic ====  <-- Header (Start)
-  Attack Prompt
-  Defense Prompt
-  ==== Combat Logic ====  <-- Header (End)
-  ```
+```text
+= Start
+Attack / Defense
+- End
+```
 
 ## Usage
 
-### Quick Start (Manual Selection Mode)
+- Click a group's arrow or header name to expand or collapse it; the header name does not open the editor.
+- The toolbar's **展開所有** and **收合所有** controls affect all groups. **🟢 / 🔴** enables or disables grouping and group filtering; **⚙️** opens settings.
+- Turn off a header to exclude its children from the prompt collection without changing their own switches. Disabled styling is applied when groups are rebuilt.
+- Under **從其他 Preset 複製配置**, select another preset and click **複製**. Manual headers are matched by UUID; unmatched headers are dropped.
+- **折設定** folds the OpenAI settings area; its choice persists separately from presets. Preset export includes folding settings, and import loads them when present.
+- **重設所有設定** restores the current preset's folding settings to defaults.
 
-1.  **Select Folder Headers**:
-      - Open settings (⚙️ button)
-      - Click "Start Selecting Folders"
-      - Check boxes next to prompts you want as folders
-      - Click "Finish Selection"
+> [!WARNING]
+> Dragging prompts to reorder them is not recommended.
 
-2.  **Control Groups**:
-      - **Click Arrow or Empty Space**: Toggle expand/collapse.
-      - **Click Name**: Opens the prompt editor (original functionality preserved).
-      - **Toggle Switch**: Disabling the header's switch will visually dim the group content and prevent those prompts from being sent to the LLM.
+## Install
 
-3.  **Toolbar Buttons**:
-      - `⬇️` / `⬆️`: Expand or Collapse all groups.
-      - `🔴` / `🟢`: Toggle the extension functionality on/off (does not delete prompts, just removes grouping).
-      - `⚙️`: Open settings to switch modes, customize dividers, toggle debug mode, or fold the API settings panel.
+1. In SillyTavern's **Extensions** tab, install `https://github.com/iiimabbie/ST-PromptFolding`.
+2. Keep the extension folder named `ST-PromptFolding` and enable **Prompt Folding**.
+3. Open the OpenAI/Chat Completion Prompt Manager; the extension works there.
 
-4.  **Cross-Preset Config Copy**:
-      - Open settings panel (⚙️ button)
-      - In the "Copy Config from Other Preset" section, select a source Preset
-      - Click the "Copy" button
-      - The system will automatically match prompts by UUID and apply the folding configuration to your current Preset
-
-5.  **Fold Settings Panel**:
-      - Open settings panel (⚙️ button)
-      - Check the "折設定" (Fold Settings) checkbox
-      - The OpenAI API parameter sliders (context size, temperature, penalties, etc.) will collapse into a single expandable block
-      - This setting persists across Preset switches (saved to localStorage)
-
-### Legacy Modes (Standard/Sandwich)
-
-For Standard or Sandwich modes:
-- Create a new prompt in the Prompt Manager.
-- Name it starting with a divider symbol (default is `=` or `-`), e.g., `= Character Settings`.
-- Drag it above the prompts you want to group.
-
-## Installation
-
-1.  Copy the repository URL: `https://github.com/lilminzyu/ST-PromptFolding`
-2.  Open the **Extensions** tab in SillyTavern.
-3.  Click **Install Extension** (top-right).
-4.  Paste the URL and install.
-5.  Ensure **Prompt Folding** is enabled in the list.
-
-## License
-
-This project is licensed under the terms of the [LICENSE](LICENSE) file.
+See the [Custom BY-NC-ND-LinkOnly License](LICENSE) for terms.
