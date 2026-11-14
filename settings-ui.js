@@ -2,6 +2,8 @@ import { state, saveCustomSettings, config, log, loadFromPreset, exportConfigFro
 import { buildCollapsibleGroups } from './prompt-folding.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../popup.js';
 
+const AUTHOR_PORTFOLIO_URL = 'https://classy-christmas-5c1.notion.site/Rainori-4188b3769594807babe7d3fd4074d118';
+
 let listContainerRef = null;
 let selectionSnapshot = null;
 let foldRestoreInfo = null;
@@ -499,7 +501,7 @@ function loadMetaInfo() {
         .then(m => {
             const el = document.getElementById('prompt-folding-version-info');
             if (!el) return;
-            el.innerHTML = `v${m.version} © <a href="${m.homePage}" target="_blank" rel="noopener" style="color: inherit; opacity: 0.7;">${m.author}</a>`;
+            el.innerHTML = `v${m.version} © <a href="${AUTHOR_PORTFOLIO_URL}" target="_blank" rel="noopener" style="color: inherit; opacity: 0.7;">${m.author}</a>`;
         });
 
     (changelogData ??= fetch('/scripts/extensions/third-party/ST-PromptFolding/changelog.json').then(r => r.json()))
