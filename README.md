@@ -36,7 +36,7 @@ Attack / Defense
 
 - Click a group's arrow or header name to expand or collapse it; the header name does not open the editor.
 - The toolbar's **展開所有** and **收合所有** controls affect all groups. **🟢 / 🔴** enables or disables grouping and group filtering; **⚙️** opens settings.
-- Turn off a header to exclude its children from the prompt collection without changing their own switches. Disabled styling is applied when groups are rebuilt.
+- Turn off a header and every child that SillyTavern lets you toggle is treated as turned off, including character description, world info and chat history. Their own switches are not changed. Disabled styling is applied when groups are rebuilt.
 - Under **從其他 Preset 複製配置**, select another preset and click **複製**. Manual headers are matched by UUID; unmatched headers are dropped.
 - **折設定** folds the OpenAI settings area; its choice persists separately from presets. Preset export includes folding settings, and import loads them when present.
 - **重設所有設定** restores the current preset's folding settings to defaults.

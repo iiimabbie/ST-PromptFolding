@@ -5,15 +5,17 @@ import { callGenericPopup, POPUP_TYPE } from '../../../popup.js';
 let listContainerRef = null;
 let selectionSnapshot = null;
 let foldRestoreInfo = null;
+let settingsHTML;
+let manifestData;
+let changelogData;
 
 export async function createSettingsPanel(pmContainer, listContainer) {
+    listContainerRef = listContainer;
     if (document.getElementById('prompt-folding-settings')) return;
 
-    listContainerRef = listContainer;
-
     try {
-        const res = await fetch('/scripts/extensions/third-party/ST-PromptFolding/settings.html');
-        const html = await res.text();
+        const html = await (settingsHTML ??= fetch('/scripts/extensions/third-party/ST-PromptFolding/settings.html').then(r => r.text()));
+        if (!pmContainer.isConnected || pmContainer.querySelector(config.selectors.promptList) !== listContainer || document.getElementById('prompt-folding-settings')) return;
 
         const header = pmContainer.querySelector('.completion_prompt_manager_header');
         (header || pmContainer).insertAdjacentHTML(header ? 'afterend' : 'beforebegin', html);
@@ -207,6 +209,13 @@ function cancelDividerChanges() {
         if (textarea) textarea.value = _dividerSnapshot.join('\n');
         _dividerSnapshot = null;
     }
+    document.getElementById('prompt-folding-float-wrapper')?.remove();
+}
+
+// preset 切換時放棄尚未確認的分隔符號修改
+export function cancelDividerEdit() {
+    if (!_dividerSnapshot) return;
+    _dividerSnapshot = null;
     document.getElementById('prompt-folding-float-wrapper')?.remove();
 }
 
@@ -486,16 +495,14 @@ async function handleCopyConfig(els) {
 }
 
 function loadMetaInfo() {
-    fetch('/scripts/extensions/third-party/ST-PromptFolding/manifest.json')
-        .then(r => r.json())
+    (manifestData ??= fetch('/scripts/extensions/third-party/ST-PromptFolding/manifest.json').then(r => r.json()))
         .then(m => {
             const el = document.getElementById('prompt-folding-version-info');
             if (!el) return;
             el.innerHTML = `v${m.version} © <a href="${m.homePage}" target="_blank" rel="noopener" style="color: inherit; opacity: 0.7;">${m.author}</a>`;
         });
 
-    fetch('/scripts/extensions/third-party/ST-PromptFolding/changelog.json')
-        .then(r => r.json())
+    (changelogData ??= fetch('/scripts/extensions/third-party/ST-PromptFolding/changelog.json').then(r => r.json()))
         .then(logs => {
             const icon = document.getElementById('prompt-folding-changelog-icon');
             if (icon) {

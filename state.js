@@ -1,3 +1,6 @@
+import { oai_settings } from '../../../../scripts/openai.js';
+import { getPresetManager } from '../../../../scripts/preset-manager.js';
+
 // --- 全域設定 ---
 export const config = {
     // CSS 選擇器
@@ -38,7 +41,6 @@ export let state = {
     foldingMode: 'manual',
     debugMode: false,
     manualHeaders: new Set(),
-    originalNames: new Map(), // runtime-only cache，不寫入 preset
 
     // Runtime 狀態
     isProcessing: false,
@@ -70,45 +72,30 @@ export function log(...args) {
     }
 }
 
-// --- savePreset fn cache（從 OAI_PRESET_CHANGED_BEFORE 事件取得）---
-let _cachedSavePreset = null;
-
-export function setCachedSavePreset(fn) {
-    _cachedSavePreset = fn;
-}
-
 // --- 從 preset extensions 載入 state ---
 export function loadFromPreset(pfData) {
-    console.log('[PF] loadFromPreset called with:', JSON.stringify(pfData));
-    // manualHeaders 支援純 UUID 陣列（新格式）或 {uuid,name} 物件陣列（舊格式）
-    const rawHeaders = pfData?.manualHeaders ?? [];
-    const uuids = rawHeaders.map(h => (typeof h === 'string' ? h : h?.uuid)).filter(Boolean);
-
-    state.openGroups     = pfData?.openStates     ?? {};
-    state.isEnabled      = pfData?.featureEnabled  ?? true;
-    state.customDividers = pfData?.customDividers  ?? [...config.defaultDividers];
-    state.foldingMode    = pfData?.foldingMode     ?? 'manual';
-    state.debugMode      = pfData?.debugMode       ?? false;
-    state.manualHeaders  = new Set(uuids);
-    // originalNames 不從 preset 讀取，保持 runtime cache（由 prompt-folding.js 即時填入）
-    state.originalNames  = new Map();
+    const data = normalizePfData(pfData);
+    state.openGroups     = data.openStates;
+    state.isEnabled      = data.featureEnabled;
+    state.customDividers = data.customDividers;
+    state.foldingMode    = data.foldingMode;
+    state.debugMode      = data.debugMode;
+    state.manualHeaders  = new Set(data.manualHeaders);
 
     buildDividerRegex();
-    log('loadFromPreset:', pfData ? `mode=${state.foldingMode}, headers=${uuids.length}` : 'no data, using defaults');
+    log('loadFromPreset:', pfData ? `mode=${state.foldingMode}, headers=${state.manualHeaders.size}` : 'no data, using defaults');
 }
 
-// --- 正規化任意格式的 pfData 為新格式（清除 version/sourcePreset，統一 manualHeaders 為純 UUID）---
+// --- 補齊預設值並統一 manualHeaders 格式 ---
 function normalizePfData(pfData) {
-    if (!pfData) return null;
-    const rawHeaders = pfData.manualHeaders ?? [];
-    const uuids = rawHeaders.map(h => (typeof h === 'string' ? h : h?.uuid)).filter(Boolean);
+    pfData ??= {};
     return {
         openStates:     pfData.openStates     ?? {},
         featureEnabled: pfData.featureEnabled  ?? true,
         foldingMode:    pfData.foldingMode     ?? 'manual',
         customDividers: pfData.customDividers  ?? [...config.defaultDividers],
         debugMode:      pfData.debugMode       ?? false,
-        manualHeaders:  uuids,
+        manualHeaders:  (pfData.manualHeaders ?? []).map(h => (typeof h === 'string' ? h : h?.uuid)).filter(Boolean),
     };
 }
 
@@ -125,58 +112,38 @@ export function getStateForSave() {
 }
 
 // --- 存到 preset JSON ---
-export async function saveToPreset() {
-    try {
-        const [
-            { oai_settings, openai_settings: oaiSettingsArr, openai_setting_names },
-            { getRequestHeaders },
-        ] = await Promise.all([
-            import('../../../../scripts/openai.js'),
-            import('../../../../script.js'),
-        ]);
+let pendingSave = null;
 
-        const pfData = getStateForSave();
+function capturePresetSave() {
+    return {
+        name: oai_settings.preset_settings_openai || getCurrentPresetName(),
+        value: structuredClone(getStateForSave()),
+    };
+}
 
-        // 同步寫入 oai_settings（runtime）
-        oai_settings.extensions = oai_settings.extensions || {};
-        oai_settings.extensions.prompt_folding = pfData;
+function writePresetSave({ name, value }) {
+    return getPresetManager('openai').writePresetExtensionField({ name, path: 'prompt_folding', value });
+}
 
-        // 同步寫入 openai_settings[idx]（in-memory preset 原始物件），確保兩處一致
-        const name = oai_settings.preset_settings_openai || getCurrentPresetName();
-        const idx = openai_setting_names[name];
-        if (idx !== undefined) {
-            oaiSettingsArr[idx].extensions = oaiSettingsArr[idx].extensions || {};
-            oaiSettingsArr[idx].extensions.prompt_folding = pfData;
-        }
+export function flushPresetSave() {
+    if (!pendingSave) return Promise.resolve();
+    clearTimeout(pendingSave.timer);
+    const saved = pendingSave;
+    pendingSave = null;
+    return writePresetSave(saved);
+}
 
-        console.log('[PF] saveToPreset — preset:', name, '| data:', JSON.stringify(pfData));
+export function schedulePresetSave() {
+    const saved = capturePresetSave();
+    if (pendingSave && pendingSave.name !== saved.name) flushPresetSave().catch(err => console.error('[PF] Save failed:', err));
+    if (pendingSave) clearTimeout(pendingSave.timer);
+    pendingSave = saved;
+    saved.timer = setTimeout(() => flushPresetSave().catch(err => console.error('[PF] Save failed:', err)), 1500);
+}
 
-        if (_cachedSavePreset) {
-            console.log('[PF] saveToPreset: using cachedSavePreset');
-            await _cachedSavePreset(name, oai_settings, false);
-            console.log('[PF] saveToPreset: done');
-        } else {
-            console.log('[PF] saveToPreset: using fallback fetch');
-            if (idx === undefined) {
-                console.error('[PF] saveToPreset fallback: preset not found in memory:', name);
-                return;
-            }
-            const res = await fetch('/api/presets/save', {
-                method: 'POST',
-                headers: getRequestHeaders(),
-                body: JSON.stringify({ apiId: 'openai', name, preset: oaiSettingsArr[idx] }),
-            });
-            const resBody = await res.text();
-            console.log('[PF] fallback: status=', res.status, 'body=', resBody);
-            if (!res.ok) {
-                console.error('[PF] saveToPreset fallback: server returned', res.status, res.statusText);
-                return;
-            }
-        }
-        log('Saved to preset:', name);
-    } catch (err) {
-        console.error('[PF] saveToPreset failed:', err);
-    }
+export function saveToPreset() {
+    schedulePresetSave();
+    return flushPresetSave();
 }
 
 // saveCustomSettings：向下相容，呼叫 saveToPreset（fire-and-forget）
@@ -232,9 +199,8 @@ export async function exportConfigFromPreset(presetName) {
 export async function importConfigToCurrentPreset(configData, currentPromptItems) {
     log('Importing config from another preset to', getCurrentPresetName());
 
-    // 先正規化再載入（configData 已經過 exportConfigFromPreset 正規化，但防禦性處理）
-    const normalized = normalizePfData(configData);
-    loadFromPreset(normalized);
+    // 載入設定，並由 loadFromPreset 統一格式
+    loadFromPreset(configData);
 
     // manualHeaders UUID 匹配：只保留當前 preset 中存在的
     const currentUuids = new Set(

@@ -1,9 +1,11 @@
-import { config, state, log, loadFromPreset, saveToPreset, setCachedSavePreset, getStateForSave, getCurrentPresetFoldingData } from './state.js';
+import { config, state, log, loadFromPreset, saveToPreset, flushPresetSave, getStateForSave, getCurrentPresetFoldingData, getCurrentPresetName } from './state.js';
 import { buildCollapsibleGroups, toggleAllGroups } from './prompt-folding.js';
-import { createSettingsPanel, cancelManualSelection, updateSettingsUI, applyFoldSettings } from './settings-ui.js';
+import { createSettingsPanel, cancelManualSelection, cancelDividerEdit, updateSettingsUI, applyFoldSettings } from './settings-ui.js';
 import { eventSource, event_types } from '../../../../script.js';
+import { promptManager } from '../../../../scripts/openai.js';
 
 let isHooked = false;
+let presetLoaded = false;
 
 // --- 1. 觀察者邏輯 ---
 
@@ -11,10 +13,11 @@ let isHooked = false;
 function createListContentObserver(listContainer) {
     if (state.observers.has(listContainer)) state.observers.get(listContainer).disconnect();
 
+    let sorting = false;
     const observer = new MutationObserver((mutations) => {
-        if (state.isProcessing) return;
+        if (state.isProcessing || sorting) return;
 
-        const isPromptNode = (n) => n.nodeType === 1 && (n.matches(config.selectors.promptListItem) || n.querySelector(config.selectors.promptListItem));
+        const isPromptNode = (n) => n.nodeType === 1 && !n.matches('.ui-sortable-placeholder, .ui-sortable-helper') && (n.matches(config.selectors.promptListItem) || n.querySelector(config.selectors.promptListItem));
 
         const shouldRebuild = mutations.some(m => {
             // childList: 新增/刪除節點
@@ -36,30 +39,22 @@ function createListContentObserver(listContainer) {
         if (shouldRebuild) {
             observer.disconnect();
             buildCollapsibleGroups(listContainer);
-            setTimeout(() => observer.observe(listContainer, { childList: true, subtree: true, characterData: true }), 100);
+            observer.observe(listContainer, { childList: true, subtree: true, characterData: true });
         }
     });
 
-    observer.observe(listContainer, { childList: true, subtree: true, characterData: true });
+    const observe = () => observer.observe(listContainer, { childList: true, subtree: true, characterData: true });
+    $(listContainer).off('.promptFolding').on('sortstart.promptFolding', () => {
+        sorting = true;
+        observer.disconnect();
+    }).on('sortstop.promptFolding', () => {
+        sorting = false;
+        buildCollapsibleGroups(listContainer);
+        observe();
+    });
+    observe();
     state.observers.set(listContainer, observer);
 }
-
-// 處理拖曳 (拖曳時暫停監控，拖完重整)
-function setupDragHandlers(listContainer) {
-    listContainer.addEventListener('dragstart', (e) => {
-        if (e.target.closest(config.selectors.promptListItem)) {
-            state.observers.get(listContainer)?.disconnect();
-        }
-    });
-
-    listContainer.addEventListener('dragend', () => {
-        setTimeout(() => {
-            buildCollapsibleGroups(listContainer);
-            state.observers.get(listContainer)?.observe(listContainer, { childList: true, subtree: true, characterData: true });
-        }, 150);
-    });
-}
-
 
 // --- 2. UI 按鈕邏輯 ---
 
@@ -138,27 +133,43 @@ function setupToggleButton(listContainer) {
 
 // --- 3. Hook 核心邏輯 ---
 
+// 關閉的群組 = 把組內每一則都關掉；ST 本身不給關的（聊天紀錄、範例對話）照常送出
+function getGroupDisabledIds(pm) {
+    const ids = new Set();
+    if (!state.isEnabled) return ids;
+
+    updateGroupHeaderStatus(pm);
+    for (const [groupKey, childIds] of Object.entries(state.groupHierarchy)) {
+        if (state.groupHeaderStatus[groupKey] !== false) continue;
+        for (const id of childIds) {
+            const prompt = pm.getPromptById(id);
+            if (prompt && pm.isPromptToggleAllowed(prompt)) ids.add(id);
+        }
+    }
+    return ids;
+}
+
 function hookPromptManager(pm) {
     const originalGet = pm.getPromptCollection.bind(pm);
+    const originalIsDisabled = pm.isPromptDisabledForActiveCharacter.bind(pm);
 
+    // 比照 ST 關掉單則的做法：移出清單，main 留一個空內容的替身
     pm.getPromptCollection = function(type) {
         const collection = originalGet(type);
-        if (!state.isEnabled) return collection;
+        const disabledIds = getGroupDisabledIds(pm);
+        if (disabledIds.size === 0) return collection;
 
-        updateGroupHeaderStatus(pm);
-
-        const disabledIds = new Set();
-        for (const [groupKey, childIds] of Object.entries(state.groupHierarchy)) {
-            if (state.groupHeaderStatus[groupKey] === false) {
-                childIds.forEach(id => disabledIds.add(id));
-            }
-        }
-
-        if (disabledIds.size > 0) {
-            collection.collection = collection.collection.filter(p => !disabledIds.has(p.identifier));
-        }
-
+        collection.collection = collection.collection
+            .filter(p => p.identifier === 'main' || !disabledIds.has(p.identifier))
+            .map(p => (p.identifier === 'main' && disabledIds.has('main'))
+                ? pm.preparePrompt({ ...pm.getPromptById('main'), content: '' })
+                : p);
         return collection;
+    };
+
+    // ST 會把角色描述、世界書等 marker 補回清單，再用這個判斷要不要送
+    pm.isPromptDisabledForActiveCharacter = function(identifier) {
+        return originalIsDisabled(identifier) || getGroupDisabledIds(pm).has(identifier);
     };
     log('Hook installed.');
 }
@@ -178,12 +189,17 @@ function updateGroupHeaderStatus(pm) {
 // --- 4. 初始化與進入點 ---
 
 async function initialize(listContainer) {
+    const presetName = getCurrentPresetName();
     const pmWrapper = listContainer.closest('#completion_prompt_manager');
     if (!pmWrapper) return;
 
-    // 從磁碟 preset 原始資料載入 state（oai_settings.extensions 在頁面載入時可能為空）
-    const pfData = await getCurrentPresetFoldingData();
-    loadFromPreset(pfData);
+    // 首次載入從 preset 原始資料讀取；切換 preset 則由事件處理
+    if (!presetLoaded) {
+        const pfData = await getCurrentPresetFoldingData();
+        if (!listContainer.isConnected || pmWrapper.querySelector(config.selectors.promptList) !== listContainer || presetName !== getCurrentPresetName()) return;
+        loadFromPreset(pfData);
+        presetLoaded = true;
+    }
 
     cancelManualSelection();
     log('Initializing Prompt Folding...');
@@ -193,22 +209,12 @@ async function initialize(listContainer) {
     setupToggleButton(listContainer);
     buildCollapsibleGroups(listContainer);
     createListContentObserver(listContainer);
-    setupDragHandlers(listContainer);
 
     log('Initialization completed');
 
     if (!isHooked) {
-        log('Attempting to install hook...');
-        import('../../../../scripts/openai.js').then(m => {
-            const check = setInterval(() => {
-                if (m.promptManager?.serviceSettings) {
-                    clearInterval(check);
-                    hookPromptManager(m.promptManager);
-                    isHooked = true;
-                }
-            }, 100);
-            setTimeout(() => clearInterval(check), 5000);
-        });
+        hookPromptManager(promptManager);
+        isHooked = true;
     }
 }
 
@@ -222,7 +228,7 @@ const globalObserver = new MutationObserver((mutations) => {
         }
     }
 });
-globalObserver.observe(document.body, { childList: true, subtree: true });
+globalObserver.observe(document.getElementById('completion_prompt_manager'), { childList: true });
 
 const initialList = document.querySelector(config.selectors.promptList);
 if (initialList) initialize(initialList);
@@ -231,10 +237,12 @@ if (initialList) initialize(initialList);
 // --- 5. Preset 事件監聽 ---
 
 // Preset 切換前：讀新 preset 資料，避免 initialize 用到舊 state
-eventSource.on(event_types.OAI_PRESET_CHANGED_BEFORE, ({ preset, savePreset }) => {
-    setCachedSavePreset(savePreset);
+eventSource.on(event_types.OAI_PRESET_CHANGED_BEFORE, ({ preset }) => {
+    flushPresetSave().catch(err => console.error('[PF] Save failed:', err));
+    cancelDividerEdit();
     cancelManualSelection();
     loadFromPreset(preset.extensions?.prompt_folding);
+    presetLoaded = true;
     log('OAI_PRESET_CHANGED_BEFORE: loaded new preset data');
 });
 
@@ -253,13 +261,4 @@ eventSource.on(event_types.OAI_PRESET_EXPORT_READY, (preset) => {
     preset.extensions ??= {};
     preset.extensions.prompt_folding = getStateForSave();
     log('Folding config injected into export');
-});
-
-// 匯入外部 preset 檔案：讀 prompt_folding 並存進當前 preset
-eventSource.on(event_types.OAI_PRESET_IMPORT_READY, ({ data, presetName }) => {
-    const pfData = data?.extensions?.prompt_folding;
-    if (!pfData) return;
-    // 匯入目標 preset 的 state
-    loadFromPreset(pfData);
-    log('OAI_PRESET_IMPORT_READY: loaded folding data for', presetName);
 });

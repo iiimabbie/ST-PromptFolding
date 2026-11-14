@@ -97,31 +97,6 @@
     /* 內容和標題之間加點間距 */
 }
 
-/* 7. 拖曳狀態的視覺回饋
------------------------------------------------------------- */
-li.completion_prompt_manager_prompt[draggable="true"] {
-    cursor: move;
-}
-
-/* 拖曳中的項目半透明 */
-li.completion_prompt_manager_prompt.dragging {
-    opacity: 0.4;
-    background-color: rgba(74, 158, 255, 0.1);
-}
-
-/* 拖曳中的整個群組有邊框提示 */
-.mingyu-prompt-group.dragging-group {
-    outline: 2px dashed #4a9eff;
-    outline-offset: 2px;
-    border-radius: 4px;
-}
-
-/* 8. 拖曳目標區域的視覺回饋
------------------------------------------------------------- */
-li.completion_prompt_manager_prompt[draggable="true"]:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
 /* 10. 空群組的提示
 ------------------------------------------------------------ */
 .mingyu-prompt-group-content:empty::after {
@@ -185,10 +160,6 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
     .mingyu-prompt-group>summary:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
-
-    li.completion_prompt_manager_prompt.dragging {
-        background-color: rgba(74, 158, 255, 0.2);
-    }
 }
 
 /* 15. Header 佈局優化 + 全部展開/收合按鈕樣式
@@ -230,7 +201,7 @@ li.completion_prompt_manager_prompt[draggable="true"]:hover {
 }
 
 .mingyu-settings-toggle.active,
-.menu_button:not(.disabled):hover {
+.mingyu-collapse-controls .menu_button:not(.disabled):hover {
     opacity: 1;
     background-color: rgba(74, 158, 255, 0.2);
     border-radius: 4px;

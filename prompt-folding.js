@@ -1,10 +1,4 @@
-import { config, state, dividerRegex, log, saveToPreset } from './state.js';
-
-let _saveTimer = null;
-function debouncedSave() {
-    clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(() => saveToPreset().catch(console.error), 1500);
-}
+import { config, state, dividerRegex, log, saveToPreset, schedulePresetSave } from './state.js';
 
 /**
  * 從 <a> 標籤中提取純文字名稱（不含 icon）
@@ -26,16 +20,7 @@ function getGroupHeaderInfo(promptItem) {
   const itemId = promptItem.dataset.pmIdentifier;
 
   // 每次都重新讀取名稱（確保顯示最新的名稱）
-  const currentName = extractTextName(link);
-
-  // 檢查緩存中的名稱是否已過時
-  const cachedName = state.originalNames.get(itemId);
-  if (cachedName !== currentName) {
-    log('Name changed for', itemId, ':', cachedName, '->', currentName);
-    state.originalNames.set(itemId, currentName);
-  }
-
-  const originalName = currentName;
+  const originalName = extractTextName(link);
 
   const createInfo = (name) => ({ originalName: name, stableKey: itemId });
 
@@ -62,44 +47,26 @@ function createGroupDOM(headerItem, headerInfo, contentItems) {
     // 2. 標記標題 Item
     headerItem.classList.add(config.classNames.isGroupHeader);
 
-    // 3. 建立容器（必須先建立 details，才能在 link.onclick 中引用它）
+    // 3. 建立容器
     const details = document.createElement('details');
     details.className = config.classNames.group;
     details.open = state.openGroups[groupKey] !== false; // 預設開啟
     details.dataset.groupKey = groupKey;
 
-    const link = headerItem.querySelector(config.selectors.promptLink);
-    if (link) {
-        // 在 link 上阻止原生點擊行為（避免觸發 inspect）
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }, true);
-    }
-
-    // 在 promptNameSpan 上加監聽，讓整個名稱區塊（4fr 欄位）都能點擊收闔
-    const nameSpan = headerItem.querySelector(config.selectors.promptNameSpan);
-    if (nameSpan) {
-        nameSpan.addEventListener('click', (e) => {
-            log('[NameSpan Click] target:', e.target);
-            e.preventDefault();
-            e.stopPropagation();
-            details.open = !details.open;
-            log('[NameSpan Click] toggled details.open to:', details.open);
-        }, true); // capture 階段，比 link 先觸發，stopPropagation 會阻止 link 重複處理
-    }
-
-    // 4. 建立 Summary (標題列)
+    // 4. 標題文字與箭頭收合群組，其他操作交給 ST
     const summary = document.createElement('summary');
-    summary.onclick = (e) => {
-        log('[Summary Click] target:', e.target);
-        e.preventDefault();
-        // 直接點到 summary（箭頭區域）時也觸發收闔
-        if (e.target === summary) {
+    summary.addEventListener('click', (e) => {
+        const name = e.target.closest(config.selectors.promptNameSpan);
+        if (e.target === summary || (name && name.closest(`.${config.classNames.isGroupHeader}`) === headerItem)) {
+            e.preventDefault();
+            e.stopPropagation();
             details.open = !details.open;
-            log('[Summary Click] toggled details.open to:', details.open);
+            state.openGroups[groupKey] = details.open;
+            schedulePresetSave();
+        } else {
+            e.preventDefault();
         }
-    };
+    }, true);
     summary.appendChild(headerItem);
     details.appendChild(summary);
 
@@ -108,12 +75,6 @@ function createGroupDOM(headerItem, headerInfo, contentItems) {
     contentDiv.className = config.classNames.groupContent;
     contentItems.forEach(item => contentDiv.appendChild(item));
     details.appendChild(contentDiv);
-
-    // 6. 監聽開關狀態
-    details.ontoggle = () => {
-        state.openGroups[groupKey] = details.open;
-        debouncedSave();
-    };
 
     return details;
 }
@@ -131,27 +92,25 @@ export function buildCollapsibleGroups(listContainer) {
     // 1. 先把所有項目拿出來，還原成乾淨的狀態
     const allItems = Array.from(listContainer.querySelectorAll(config.selectors.promptListItem));
 
-    allItems.forEach(item => {
-      item.classList.remove(config.classNames.isGroupHeader);
-      // 讀取當前實際名稱（不要用舊緩存）
-      const itemId = item.dataset.pmIdentifier;
-      const link = item.querySelector(config.selectors.promptLink);
-      if (link && itemId) {
-        const currentName = extractTextName(link);
-        // 更新緩存為當前名稱
-        state.originalNames.set(itemId, currentName);
-        // 不需要 setTextName，因為已經是當前名稱了
-      }
-    });
+    allItems.forEach(item => item.classList.remove(config.classNames.isGroupHeader));
 
-    // 2. 清空並重置狀態
-    listContainer.innerHTML = '';
+    // 保留 ST 的列表標題與其他非 prompt 節點
+    const promptContainers = Array.from(listContainer.children).filter(el =>
+      el.matches(config.selectors.promptListItem) || el.classList.contains(config.classNames.group));
+    const anchor = document.createComment('prompt folding');
+    listContainer.insertBefore(anchor, promptContainers[0] || null);
+    allItems.forEach(item => item.remove());
+    promptContainers.forEach(el => el.remove());
+    const appendItem = item => listContainer.insertBefore(item, anchor);
+
+    // 2. 重置狀態
     state.groupHierarchy = {};
     state.groupHeaderStatus = {};
 
     // 3. 沒啟用就直接塞回去
     if (!state.isEnabled) {
-      allItems.forEach(item => listContainer.appendChild(item));
+      allItems.forEach(item => appendItem(item));
+      anchor.remove();
       return;
     }
 
@@ -163,9 +122,9 @@ export function buildCollapsibleGroups(listContainer) {
 
       const flushBuffer = () => {
         if (currentHeader) {
-            listContainer.appendChild(createGroupDOM(currentHeader, currentHeaderInfo, buffer));
+            appendItem(createGroupDOM(currentHeader, currentHeaderInfo, buffer));
         } else {
-            buffer.forEach(i => listContainer.appendChild(i)); // 沒標題的孤兒
+            buffer.forEach(i => appendItem(i)); // 沒標題的孤兒
         }
         buffer = [];
       };
@@ -192,7 +151,7 @@ export function buildCollapsibleGroups(listContainer) {
         const info = getGroupHeaderInfo(current);
 
         if (!info) {
-          listContainer.appendChild(current); // 不是標題，直接放
+          appendItem(current); // 不是標題，直接放
           continue;
         }
 
@@ -202,14 +161,16 @@ export function buildCollapsibleGroups(listContainer) {
         if (closerIdx !== -1) {
           // 抓出中間這整包 (含結束標題)
           const groupContent = remaining.splice(0, closerIdx + 1);
-          listContainer.appendChild(createGroupDOM(current, info, groupContent));
+          appendItem(createGroupDOM(current, info, groupContent));
         } else {
-          listContainer.appendChild(current); // 找不到另一半，當孤兒
+          appendItem(current); // 找不到另一半，當孤兒
         }
       }
     };
 
     state.foldingMode === 'sandwich' ? buildSandwichGroups() : buildStandardGroups();
+
+    anchor.remove();
 
     // 補上禁用樣式
     applyGroupDisabledStyles(listContainer);
@@ -219,6 +180,7 @@ export function buildCollapsibleGroups(listContainer) {
   } catch (err) {
     console.error('[PF] Oops, 分組壞了:', err);
   } finally {
+    state.observers.get(listContainer)?.takeRecords();
     state.isProcessing = false;
   }
 }
