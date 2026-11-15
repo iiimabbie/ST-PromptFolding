@@ -10,7 +10,7 @@
   "settings": "settings.html",
   "type": "module",
   "author": "iiimabbie",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "homePage": "https://github.com/iiimabbie/ST-PromptFolding",
   "i18n": {
     "en": "i18n/en.json",

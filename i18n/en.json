@@ -57,6 +57,7 @@
   "更新日誌": "Changelog",
   "配置複製完成！\n• UUID 匹配：${0} 個": "Settings copied!\n• UUID matches: ${0}",
   "\n• 無法匹配：${0} 個": "\n• Unmatched: ${0}",
+  "docs: 移除 README 中「不建議拖曳排序」的過時提醒（2.8.0 起拖曳已不會反覆重建分組）。": "Docs: Remove the outdated README warning against drag-to-reorder (since 2.8.0, dragging no longer rebuilds groups repeatedly).",
   "介面支援繁中、簡中、英文，跟著 SillyTavern 的語言切換": "The interface supports Traditional Chinese, Simplified Chinese, and English, following the SillyTavern language setting",
   "fix: 修正停用群組後，角色描述、世界書仍會送出，且被移到最後面的問題。": "Fix: Prevent character descriptions and world info from being sent and moved to the end when their group is disabled.",
   "fix: 修正每次畫面重繪都會儲存 preset，以及分組後清單標題列消失的問題。": "Fix: Avoid saving the preset on every redraw and preserve the list header after grouping.",
