@@ -52,9 +52,6 @@ Attack / Defense
 - **Fold settings** folds the OpenAI settings area; its choice persists separately from presets. Preset export includes folding settings, and import loads them when present.
 - **Reset all settings** restores the current preset's folding settings to defaults.
 
-> [!WARNING]
-> Dragging prompts to reorder them is not recommended.
-
 ## Install
 
 1. In SillyTavern's **Extensions** tab, choose **Install extension** and enter `https://github.com/iiimabbie/ST-PromptFolding`.
