@@ -11,7 +11,7 @@ A SillyTavern extension that organizes the OpenAI/Chat Completion Prompt Manager
 ![Version](https://img.shields.io/github/manifest-json/v/iiimabbie/ST-PromptFolding?label=version&color=8a5cf6)
 ![SillyTavern](https://img.shields.io/badge/SillyTavern-extension-e8a87c)
 ![i18n](https://img.shields.io/badge/i18n-繁中%20·%20简中%20·%20EN-2ea44f)
-![License](https://img.shields.io/badge/license-BY--NC--ND--LinkOnly-lightgrey)
+![License](https://img.shields.io/badge/license-CC%20BY--NC--ND%204.0-lightgrey)
 
 [Features](#features) · [Folding modes](#folding-modes) · [Usage](#usage) · [Install](#install)
 
