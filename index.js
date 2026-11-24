@@ -66,7 +66,8 @@ function createBtn(icon, title, onClick, className = '') {
 
     if (icon.startsWith('fa-')) {
         const i = document.createElement('i');
-        i.className = `fa-solid ${icon}`;
+        // fa-fw 讓每顆圖示同寬，按鈕大小才一致
+        i.className = `fa-solid fa-fw ${icon}`;
         btn.appendChild(i);
     } else {
         btn.textContent = icon;
@@ -99,23 +100,24 @@ function setupToggleButton(listContainer) {
     );
 
     // 開關按鈕
-    const toggleBtn = createBtn('', '', () => {
+    const toggleBtn = createBtn('fa-toggle-on', '', () => {
         state.isEnabled = !state.isEnabled;
         saveToPreset().catch(err => console.error('[PF] Save failed:', err));
         log('Feature toggled:', state.isEnabled);
         updateToggleState();
         buildCollapsibleGroups(listContainer);
-    });
+    }, 'mingyu-feature-toggle');
 
     const updateToggleState = () => {
-        toggleBtn.textContent = state.isEnabled ? '🟢' : '🔴';
+        toggleBtn.querySelector('i').className = `fa-solid fa-fw ${state.isEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}`;
+        toggleBtn.classList.toggle('is-off', !state.isEnabled);
         toggleBtn.title = state.isEnabled ? t`點擊停用` : t`點擊啟用`;
     };
     updateToggleState();
     container.append(toggleBtn);
 
     // 設定按鈕
-    const settingsBtn = createBtn('⚙️', t`分組設定`, () => {
+    const settingsBtn = createBtn('fa-gear', t`分組設定`, () => {
         log('Settings button clicked');
         const panel = document.getElementById('prompt-folding-settings');
         if (panel) {

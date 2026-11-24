@@ -216,6 +216,11 @@
     transform: scale(0.95) !important;
 }
 
+/* 功能關閉時開關圖示淡一點，跟開著的一眼分得出來 */
+.mingyu-feature-toggle.is-off i {
+    opacity: 0.5;
+}
+
 /* 16. 設定面板樣式
 ------------------------------------------------------------ */
 #prompt-folding-settings {
