@@ -46,7 +46,7 @@ Attack / Defense
 ## Usage
 
 - Click a group's arrow or header name to expand or collapse it; the header name does not open the editor.
-- The toolbar's **Expand all** and **Collapse all** controls affect all groups. The **toggle switch** enables or disables grouping and group filtering; the **gear** opens settings.
+- The toolbar's **Expand all** and **Collapse all** controls affect all groups. The **check / cross icon** enables or disables grouping and group filtering; the **gear** opens settings.
 - Turn off a header and every child that SillyTavern lets you toggle is treated as turned off, such as toggleable character descriptions and world info. Their own switches are not changed. Disabled styling is applied when groups are rebuilt.
 - Under **Copy settings from another preset**, select another preset and click **Copy**. Manual headers are matched by UUID; unmatched headers are dropped.
 - **Fold settings** folds the OpenAI settings area; its choice persists separately from presets. Preset export includes folding settings, and import loads them when present.

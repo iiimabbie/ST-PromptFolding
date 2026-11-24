@@ -100,7 +100,7 @@ function setupToggleButton(listContainer) {
     );
 
     // 開關按鈕
-    const toggleBtn = createBtn('fa-toggle-on', '', () => {
+    const toggleBtn = createBtn('fa-circle-check', '', () => {
         state.isEnabled = !state.isEnabled;
         saveToPreset().catch(err => console.error('[PF] Save failed:', err));
         log('Feature toggled:', state.isEnabled);
@@ -109,7 +109,7 @@ function setupToggleButton(listContainer) {
     }, 'mingyu-feature-toggle');
 
     const updateToggleState = () => {
-        toggleBtn.querySelector('i').className = `fa-solid fa-fw ${state.isEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}`;
+        toggleBtn.querySelector('i').className = `fa-solid fa-fw ${state.isEnabled ? 'fa-circle-check' : 'fa-circle-xmark'}`;
         toggleBtn.classList.toggle('is-off', !state.isEnabled);
         toggleBtn.title = state.isEnabled ? t`點擊停用` : t`點擊啟用`;
     };
