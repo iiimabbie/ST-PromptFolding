@@ -29,7 +29,7 @@ A SillyTavern extension that organizes the OpenAI/Chat Completion Prompt Manager
 ## Folding modes
 
 ### Manual selection
-In **Group settings** (⚙️), choose **Manual selection mode** and click **Start selecting folders**. Check the prompts to use as headers, then confirm with the green check or cancel with the red ×. Each header groups the following prompts up to the next header.
+In **Group settings** (gear icon), choose **Manual selection mode** and click **Start selecting folders**. Check the prompts to use as headers, then confirm with the green check or cancel with the red ×. Each header groups the following prompts up to the next header.
 
 ### Standard mode
 Under **Legacy modes**, choose **Standard mode**. Prompt names starting with a configured marker become headers; the defaults are `=` and `-`. Edit **Group markers (one per line)** and confirm with the check to apply changes.
@@ -46,7 +46,7 @@ Attack / Defense
 ## Usage
 
 - Click a group's arrow or header name to expand or collapse it; the header name does not open the editor.
-- The toolbar's **Expand all** and **Collapse all** controls affect all groups. **🟢 / 🔴** enables or disables grouping and group filtering; **⚙️** opens settings.
+- The toolbar's **Expand all** and **Collapse all** controls affect all groups. The **check / cross icon** enables or disables grouping and group filtering; the **gear** opens settings.
 - Turn off a header and every child that SillyTavern lets you toggle is treated as turned off, such as toggleable character descriptions and world info. Their own switches are not changed. Disabled styling is applied when groups are rebuilt.
 - Under **Copy settings from another preset**, select another preset and click **Copy**. Manual headers are matched by UUID; unmatched headers are dropped.
 - **Fold settings** folds the OpenAI settings area; its choice persists separately from presets. Preset export includes folding settings, and import loads them when present.
