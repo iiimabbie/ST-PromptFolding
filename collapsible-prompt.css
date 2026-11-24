@@ -89,10 +89,11 @@
 /* 6. 群組內容區域 (<div>)
 ------------------------------------------------------------ */
 .mingyu-prompt-group-content {
-    padding-left: 20px;
+    /* 邊線對齊箭頭中間：箭頭外距 4px + 寬 1em 的一半 - 線寬一半；
+       內距扣掉同樣的量，群組裡的列位置不變 */
+    padding-left: calc(20.5px - 0.5em);
     border-left: 1px solid #444;
-    margin-left: 4px;
-    /* 邊線和箭頭視覺上對齊 */
+    margin-left: calc(4px + 0.5em - 0.5px);
     margin-top: 5px;
     /* 內容和標題之間加點間距 */
 }
@@ -122,7 +123,8 @@
 
 /* 12. 焦點狀態
 ------------------------------------------------------------ */
-.mingyu-prompt-group>summary:focus {
+/* 只在鍵盤切換焦點時顯示；用 :focus 的話滑鼠、觸控點過之後框會一直留著 */
+.mingyu-prompt-group>summary:focus-visible {
     outline: 2px solid #4a9eff;
     outline-offset: 2px;
     border-radius: 4px;
