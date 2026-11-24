@@ -185,13 +185,14 @@
 .mingyu-expand-all,
 .mingyu-collapse-all,
 .mingyu-collapse-controls .menu_button.interactable {
-    padding: 4px 8px;
+    /* 跟酒館預設集那排圖示按鈕（更新、刪除、匯入匯出）同大小 */
+    padding: 3px 5px;
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s, transform 0.1s;
     background: transparent;
     border: none;
-    font-size: 16px;
+    font-size: var(--mainFontSize, 15px);
     line-height: 1;
 }
 
